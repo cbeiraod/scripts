@@ -5,7 +5,7 @@ myGenFragment_cfi.py is a config file for CMSSW, to be used in conjunction with 
 
 The Configuration/Generator package should be checked out, and myGenFragment_cfi.py should be copied to Configuration/Generator/python
 Example command to run with crab:
-cmsDriver.py myGenFrag_cfi.py --mc --eventcontent AODSIM --pileup 2012_Summer_inTimeOnly --datatier AODSIM --conditions START53_V19::All --beamspot Realistic8TeVCollision --step GEN,FASTSIM,HLT:8E33v2 --filein=file:/lustre/ncg.ingrid.pt/cmslocal/cbeiraod/TStauStau/TStauStau_50_0.lhe --fileout TStauStau_50_0_GEN_FASTSIM_HLT_PU.root --python_filename TStauStau_50_0_GEN_FASTSIM_HLT_PU.py -n 10 --no_exec
+cmsDriver.py myGenFrag_cfi.py --mc --eventcontent AODSIM --pileup 2012_Summer_inTimeOnly --datatier AODSIM --conditions START53_V19::All --beamspot Realistic8TeVCollision --step GEN,FASTSIM,HLT:7E33v2 --filein=file:/lustre/ncg.ingrid.pt/cmslocal/cbeiraod/TStauStau/TStauStau_50_0.lhe --fileout TStauStau_50_0_GEN_FASTSIM_HLT_PU.root --python_filename TStauStau_50_0_GEN_FASTSIM_HLT_PU.py -n 10 --no_exec
 
 The configuration should be tested with:
 cmsRun TStauStau_50_0_GEN_FASTSIM_HLT_PU.py
