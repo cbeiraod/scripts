@@ -1,0 +1,4 @@
+How to take a LHE file and run CMS simulation on it to have analysis ready files:
+
+myGenFragment_cfi.py is a config file for CMSSW, to be used in conjunction with CMSDriver to create CMSSW python files to be run by cmsRun or CRAB.
+     Uses tauola to decay the taus
