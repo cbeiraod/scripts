@@ -26,4 +26,14 @@ crab -getoutput -c TStauStau_50_0
 
 If everything runs fine so far, the following scripts should run without any problems. These scripts scan the LHE directory and create CMSSW "cfi" and CRAB "cfg" for 
 each LHE sample, these can then be run either locally (CMSSW "cfi") or submitted to the GRID (CRAB "cfg").
-TODO!
+Run the script createCRABcfg.sh to process a folder, where the LHE files must be present, creating a CMSSW config file and a CRAB cfg file, to submit 
+jobs to the GRID. The script does not create a log file, but outputs everything to stdout. To create a log file you can do the following:
+./createCRABcfg.sh ~/local-area/TStauStau/ > log.log
+or, if you wish to monitor the output while running:
+./createCRABcfg.sh ~/local-area/TStauStau/ | tee log.log
+
+Now, there should be 2 new folders, one named 5E33 and the other named 8E33, these use the two different HLT configurations (7E33 is a subset of 8E33 
+for the HLT paths I am interested in). Inside each, for each LHE file, there should be a py file and a cfg file. The py file can be run directly with 
+cmssw (with the command "cmsRun file") however if the number of events is large, this is not recommended. In alternative, one can run the cfg files with 
+crab, this will create several jobs per file, each job processing up to 2000 jobs. These jobs can then be submitted to the GRID, just like with the 
+previous set of commands. The number of jobs might have to be tuned.
