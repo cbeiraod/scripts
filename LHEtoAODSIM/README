@@ -37,3 +37,5 @@ for the HLT paths I am interested in). Inside each, for each LHE file, there sho
 cmssw (with the command "cmsRun file") however if the number of events is large, this is not recommended. In alternative, one can run the cfg files with 
 crab, this will create several jobs per file, each job processing up to 2000 jobs. These jobs can then be submitted to the GRID, just like with the 
 previous set of commands. The number of jobs might have to be tuned.
+
+The script runCreate.sh is a wrapper script to submit createCRABcfg.sh with qsub
