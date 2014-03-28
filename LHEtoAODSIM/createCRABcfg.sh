@@ -49,6 +49,7 @@ EVENTS_PER_JOB=2000
 REMOTE_DIR_PRE="/TStauStau"
 
 for file in $1/*.lhe; do
+  file=$(echo $file | sed 's://:/:')
   BASE=$(basename $file)
   BASE=${BASE%.*}
 
