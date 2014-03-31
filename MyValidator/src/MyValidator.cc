@@ -82,6 +82,9 @@ class MyValidator : public edm::EDAnalyzer {
       TH1F* hGenElectron1Pt;
       TH1F* hGenNMuons;
       TH1F* hGenMuon1Pt;
+      TH1F* hGenHT;
+      TH1F* hGenNJets;
+      TH1F* hGenJet1Pt;
 };
 
 //
@@ -111,6 +114,9 @@ MyValidator::MyValidator(const edm::ParameterSet& iConfig)
    hGenElectron1Pt = rootFile->make<TH1F>("hGenElectron1Pt", "1st Gen electron pt", 200, 0, 2000);
    hGenNMuons =rootFile->make<TH1F>("hGenNMuons", "Gen NMuons", 20, 0, 20);
    hGenMuon1Pt = rootFile->make<TH1F>("hGenMuon1Pt", "1st Gen muon pt", 200, 0, 2000);
+   hGenHT = rootFile->make<TH1F>("hGenHT", "Gen HT", 300, 0, 3000);
+   hGenNJets =rootFile->make<TH1F>("hGenNJets", "Gen NJets", 50, 0, 50);
+   hGenJet1Pt = rootFile->make<TH1F>("hGenJet1Pt", "1st Gen jet pt", 200, 0, 2000);
 }
 
 
@@ -138,8 +144,8 @@ MyValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
 
   reco::Particle::PolarLorentzVector genparticleP4 = PolarLorentzVector(0,0,0,0);
-  int    nGenElectrons=0,    nGenMuons=0;
-  double maxGenElectronPt=0, maxGenMuonPt=0;
+  int    nGenElectrons=0,    nGenMuons=0   , nGenJets=0;
+  double maxGenElectronPt=0, maxGenMuonPt=0, maxGenJetPt=0, genHT=0;
 
 
   for(genparticle = genparticles->begin(); genparticle != genparticles->end(); ++genparticle)
@@ -203,6 +209,14 @@ MyValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     std::cout << "\tPz:" << genparticleP4.Pz() << std::endl;
   }
 
+  for(genjet = genjets->begin(); genjet != genjets->end(); ++genjet)
+  {
+    ++nGenJets;
+    genHT += genjet->pt();
+    if(genjet->pt() > maxGenJetPt)
+      maxGenJetPt = genjet->pt();
+  }
+
   hGenMET->Fill(genparticleP4.pt());
   hGenNElectrons->Fill(nGenElectrons);
   if(nGenElectrons != 0)
@@ -210,6 +224,10 @@ MyValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   hGenNMuons->Fill(nGenMuons);
   if(nGenMuons != 0)
     hGenMuon1Pt->Fill(maxGenMuonPt);
+  hGenHT->Fill(genHT);
+  hGenNJets->Fill(nGenJets);
+  if(nGenJets != 0)
+    hGenJet1Pt->Fill(maxGenJetPt);
   //assert(1<0);
 }
 
