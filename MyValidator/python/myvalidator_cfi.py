@@ -1,4 +1,8 @@
 import FWCore.ParameterSet.Config as cms
 
-demo = cms.EDAnalyzer('MyValidator'
+validator = cms.EDAnalyzer('MyValidator',
+  modelTag = cms.string(""),
+
+  genjets = cms.InputTag('ak5GenJets'),
+  genparticles = cms.InputTag("genParticles"),
 )

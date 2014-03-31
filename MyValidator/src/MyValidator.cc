@@ -34,6 +34,9 @@
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 
+#include "DataFormats/HepMCCandidate/interface/GenParticle.h"
+#include "DataFormats/JetReco/interface/GenJet.h"
+
 
 //
 // class declaration
@@ -59,6 +62,9 @@ class MyValidator : public edm::EDAnalyzer {
 
       // ----------member data ---------------------------
       std::string param_modelTag_;
+
+      edm::InputTag inputTag_GenParticles_;
+      edm::InputTag inputTag_GenJets_;
 };
 
 //
@@ -75,6 +81,9 @@ class MyValidator : public edm::EDAnalyzer {
 MyValidator::MyValidator(const edm::ParameterSet& iConfig)
 {
    param_modelTag_ = iConfig.getParameter<std::string>("modelTag");
+
+   inputTag_GenParticles_ = iConfig.getParameter<edm::InputTag>("genparticles");
+   inputTag_GenJets_      = iConfig.getParameter<edm::InputTag>("genjets");
 
    edm::Service<TFileService> rootFile;
 }
@@ -94,7 +103,13 @@ MyValidator::~MyValidator()
 void
 MyValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
-   using namespace edm;
+  edm::Handle<reco::GenParticleCollection> genparticles;
+  iEvent.getByLabel(inputTag_GenParticles_, genparticles);
+  reco::GenParticleCollection::const_iterator genparticle;
+
+  edm::Handle<reco::GenJetCollection> genjets;
+  iEvent.getByLabel(inputTag_GenJets_, genjets);
+  reco::GenJetCollection::const_iterator genjet;
 }
 
 
