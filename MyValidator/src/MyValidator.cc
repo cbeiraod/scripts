@@ -84,6 +84,7 @@ class MyValidator : public edm::EDAnalyzer {
       edm::InputTag inputTag_PFMET_;
       edm::InputTag inputTag_PFCandidates_;
       edm::InputTag inputTag_PFJets_;
+      edm::InputTag inputTag_PFTaus_;
 
 
       TH1F* hGenMET;
@@ -102,6 +103,8 @@ class MyValidator : public edm::EDAnalyzer {
       TH1F* hHT;
       TH1F* hNJets;
       TH1F* hJet1Pt;
+      TH1F* hNTaus;
+      TH1F* hTau1Pt;
 };
 
 //
@@ -126,6 +129,7 @@ MyValidator::MyValidator(const edm::ParameterSet& iConfig)
    inputTag_PFMET_        = iConfig.getParameter<edm::InputTag>("pfmet");
    inputTag_PFCandidates_ = iConfig.getParameter<edm::InputTag>("pfcandidates");
    inputTag_PFJets_       = iConfig.getParameter<edm::InputTag>("pfjets");
+   inputTag_PFTaus_       = iConfig.getParameter<edm::InputTag>("pftaus");
 
 
    edm::Service<TFileService> rootFile;
@@ -135,7 +139,7 @@ MyValidator::MyValidator(const edm::ParameterSet& iConfig)
    hGenNMuons = rootFile->make<TH1F>("hGenNMuons", "Gen NMuons;N;Events", 20, 0, 20);
    hGenMuon1Pt = rootFile->make<TH1F>("hGenMuon1Pt", "1st Gen muon pt;P_{t} (GeV);Events", 200, 0, 2000);
    hGenHT = rootFile->make<TH1F>("hGenHT", "Gen HT;HT (GeV);Events", 300, 0, 3000);
-   hGenNJets =rootFile->make<TH1F>("hGenNJets", "Gen NJets;N;Events", 50, 0, 50);
+   hGenNJets = rootFile->make<TH1F>("hGenNJets", "Gen NJets;N;Events", 100, 0, 100);
    hGenJet1Pt = rootFile->make<TH1F>("hGenJet1Pt", "1st Gen jet pt;P_{t} (GeV);Events", 200, 0, 2000);
 
    hPFMET = rootFile->make<TH1F>("hPFMET", "MET;MET (GeV);Events", 300, 0, 3000);
@@ -144,8 +148,11 @@ MyValidator::MyValidator(const edm::ParameterSet& iConfig)
    hNMuons = rootFile->make<TH1F>("hNMuons", "NMuons;N;Events", 20, 0, 20);
    hMuon1Pt = rootFile->make<TH1F>("hMuon1Pt", "1st muon pt;P_{t} (GeV);Events", 200, 0, 2000);
    hHT = rootFile->make<TH1F>("hHT", "HT;HT (GeV);Events", 300, 0, 3000);
-   hNJets =rootFile->make<TH1F>("hNJets", "NJets;N;Events", 50, 0, 50);
+   hNJets = rootFile->make<TH1F>("hNJets", "NJets;N;Events", 100, 0, 100);
    hJet1Pt = rootFile->make<TH1F>("hJet1Pt", "1st jet pt;P_{t} (GeV);Events", 200, 0, 2000);
+
+   hNTaus = rootFile->make<TH1F>("hNTaus", "NTaus;N;Events", 100, 0, 100);
+   hTau1Pt = rootFile->make<TH1F>("hTau1Pt", "1st tau pt;P_{t} (GeV);Events", 200, 0, 2000);
 }
 
 
@@ -183,6 +190,10 @@ MyValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   iEvent.getByLabel(inputTag_PFJets_, pfjets);
   reco::PFJetCollection::const_iterator pfjet;
 
+  edm::Handle<reco::PFTauCollection> pftaus;
+  iEvent.getByLabel(inputTag_PFTaus_, pftaus);
+  reco::PFTauCollection::const_iterator pftau;
+
 
   reco::Particle::PolarLorentzVector genparticleP4 = PolarLorentzVector(0,0,0,0);
   int    nGenElectrons=0,    nGenMuons=0,    nGenJets=0;
@@ -190,8 +201,6 @@ MyValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   reco::Particle::PolarLorentzVector PFcandP4 = PolarLorentzVector(0,0,0,0);
   int    nElectrons=0,    nMuons=0,    nTaus=0,    nJets=0;
   double maxElectronPt=0, maxMuonPt=0, maxTauPt=0, maxJetPt=0, HT=0;
-  nTaus=nJets;
-  maxTauPt=maxJetPt;
 
 
   for(genparticle = genparticles->begin(); genparticle != genparticles->end(); ++genparticle)
@@ -292,6 +301,13 @@ MyValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       maxJetPt = pfjet->pt();
   }
 
+  for(pftau = pftaus->begin(); pftau != pftaus->end(); ++pftau)
+  {
+    ++nTaus;
+    if(pftau->pt() > maxTauPt)
+      maxTauPt = pftau->pt();
+  }
+
 
 
   hGenMET->Fill(genparticleP4.pt());
@@ -317,6 +333,9 @@ MyValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   hNJets->Fill(nJets);
   if(nJets != 0)
     hJet1Pt->Fill(maxJetPt);
+  hNTaus->Fill(nTaus);
+  if(nTaus != 0)
+    hTau1Pt->Fill(maxTauPt);
   //assert(1<0);
 }
 

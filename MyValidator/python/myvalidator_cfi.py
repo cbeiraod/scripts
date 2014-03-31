@@ -9,4 +9,6 @@ validator = cms.EDAnalyzer('MyValidator',
   pfmet = cms.InputTag("pfMet"),
   pfcandidates = cms.InputTag("particleFlow"),
   pfjets = cms.InputTag("ak5PFJets"),
+
+  pftaus = cms.InputTag("hpsPFTauProducer"),
 )
