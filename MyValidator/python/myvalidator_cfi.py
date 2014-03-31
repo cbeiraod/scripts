@@ -11,4 +11,9 @@ validator = cms.EDAnalyzer('MyValidator',
   pfjets = cms.InputTag("ak5PFJets"),
 
   pftaus = cms.InputTag("hpsPFTauProducer"),
+
+  leptonCut = cms.double(10),
+  tauCut = cms.double(40),
+  jetCut = cms.double(40),
+  jetEtaCut = cms.double(2.1),
 )

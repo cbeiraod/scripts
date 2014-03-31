@@ -86,6 +86,11 @@ class MyValidator : public edm::EDAnalyzer {
       edm::InputTag inputTag_PFJets_;
       edm::InputTag inputTag_PFTaus_;
 
+      double parameter_LeptonCut_;
+      double parameter_TauCut_;
+      double parameter_JetCut_;
+      double parameter_JetEtaCut_;
+
 
       TH1F* hGenMET;
       TH1F* hGenNElectrons;
@@ -105,6 +110,16 @@ class MyValidator : public edm::EDAnalyzer {
       TH1F* hJet1Pt;
       TH1F* hNTaus;
       TH1F* hTau1Pt;
+
+      TH1F* hNElectronsCut;
+      TH1F* hElectron1PtCut;
+      TH1F* hNMuonsCut;
+      TH1F* hMuon1PtCut;
+      TH1F* hHTCut;
+      TH1F* hNJetsCut;
+      TH1F* hJet1PtCut;
+      TH1F* hNTausCut;
+      TH1F* hTau1PtCut;
 };
 
 //
@@ -131,6 +146,12 @@ MyValidator::MyValidator(const edm::ParameterSet& iConfig)
    inputTag_PFJets_       = iConfig.getParameter<edm::InputTag>("pfjets");
    inputTag_PFTaus_       = iConfig.getParameter<edm::InputTag>("pftaus");
 
+   parameter_LeptonCut_ = iConfig.getParameter<double>("leptonCut");
+   parameter_TauCut_    = iConfig.getParameter<double>("tauCut");
+   parameter_JetCut_    = iConfig.getParameter<double>("jetCut");
+   parameter_JetEtaCut_ = iConfig.getParameter<double>("jetEtaCut");
+
+
 
    edm::Service<TFileService> rootFile;
    hGenMET = rootFile->make<TH1F>("hGenMET", "Gen MET;MET (GeV);Events", 300, 0, 3000);
@@ -153,6 +174,16 @@ MyValidator::MyValidator(const edm::ParameterSet& iConfig)
 
    hNTaus = rootFile->make<TH1F>("hNTaus", "NTaus;N;Events", 100, 0, 100);
    hTau1Pt = rootFile->make<TH1F>("hTau1Pt", "1st tau pt;P_{t} (GeV);Events", 200, 0, 2000);
+
+   hNElectronsCut = rootFile->make<TH1F>("hNElectronsCut", "NElectrons;N;Events", 20, 0, 20);
+   hElectron1PtCut = rootFile->make<TH1F>("hElectron1PtCut", "1st electron pt;P_{t} (GeV);Events", 200, 0, 2000);
+   hNMuonsCut = rootFile->make<TH1F>("hNMuonsCut", "NMuons;N;Events", 20, 0, 20);
+   hMuon1PtCut = rootFile->make<TH1F>("hMuon1PtCut", "1st muon pt;P_{t} (GeV);Events", 200, 0, 2000);
+   hHTCut = rootFile->make<TH1F>("hHTCut", "HT;HT (GeV);Events", 300, 0, 3000);
+   hNJetsCut = rootFile->make<TH1F>("hNJetsCut", "NJets;N;Events", 100, 0, 100);
+   hJet1PtCut = rootFile->make<TH1F>("hJet1PtCut", "1st jet pt;P_{t} (GeV);Events", 200, 0, 2000);
+   hNTausCut = rootFile->make<TH1F>("hNTausCut", "NTaus;N;Events", 100, 0, 100);
+   hTau1PtCut = rootFile->make<TH1F>("hTau1PtCut", "1st tau pt;P_{t} (GeV);Events", 200, 0, 2000);
 }
 
 
@@ -201,6 +232,8 @@ MyValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   reco::Particle::PolarLorentzVector PFcandP4 = PolarLorentzVector(0,0,0,0);
   int    nElectrons=0,    nMuons=0,    nTaus=0,    nJets=0;
   double maxElectronPt=0, maxMuonPt=0, maxTauPt=0, maxJetPt=0, HT=0;
+  int    nElectronsCut=0,    nMuonsCut=0,    nTausCut=0,    nJetsCut=0;
+  double maxElectronPtCut=0, maxMuonPtCut=0, maxTauPtCut=0, maxJetPtCut=0, HTCut=0;
 
 
   for(genparticle = genparticles->begin(); genparticle != genparticles->end(); ++genparticle)
@@ -276,8 +309,6 @@ MyValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   {
     PFcandP4 += pfcandidate->p4();
 
-    //if(pfcandidate->pt() < parameter_leptonCut_) continue;
-
     if(abs(pfcandidate->pdgId()) == 11) // electron
     {
       ++nElectrons;
@@ -291,6 +322,22 @@ MyValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       if(pfcandidate->pt() > maxMuonPt)
         maxMuonPt = pfcandidate->pt();
     }
+
+    if(pfcandidate->pt() < parameter_LeptonCut_) continue;
+
+    if(abs(pfcandidate->pdgId()) == 11) // electron
+    {
+      ++nElectronsCut;
+      if(pfcandidate->pt() > maxElectronPtCut)
+        maxElectronPtCut = pfcandidate->pt();
+    }
+
+    if(abs(pfcandidate->pdgId()) == 13) // muon
+    {
+      ++nMuonsCut;
+      if(pfcandidate->pt() > maxMuonPtCut)
+        maxMuonPtCut = pfcandidate->pt();
+    }
   }
 
   for(pfjet = pfjets->begin(); pfjet != pfjets->end(); ++pfjet)
@@ -299,6 +346,14 @@ MyValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     HT += pfjet->pt();
     if(pfjet->pt() > maxJetPt)
       maxJetPt = pfjet->pt();
+
+    if(pfjet->pt() < parameter_JetCut_) continue;
+    if(abs(pfjet->eta()) > parameter_JetEtaCut_) continue;
+
+    ++nJetsCut;
+    HTCut += pfjet->pt();
+    if(pfjet->pt() > maxJetPtCut)
+      maxJetPtCut = pfjet->pt();
   }
 
   for(pftau = pftaus->begin(); pftau != pftaus->end(); ++pftau)
@@ -306,6 +361,12 @@ MyValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     ++nTaus;
     if(pftau->pt() > maxTauPt)
       maxTauPt = pftau->pt();
+
+    if(pftau->pt() < parameter_TauCut_) continue;
+
+    ++nTausCut;
+    if(pftau->pt() > maxTauPtCut)
+      maxTauPtCut = pftau->pt();
   }
 
 
@@ -336,6 +397,20 @@ MyValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   hNTaus->Fill(nTaus);
   if(nTaus != 0)
     hTau1Pt->Fill(maxTauPt);
+
+  hNElectronsCut->Fill(nElectronsCut);
+  if(nElectronsCut != 0)
+    hElectron1PtCut->Fill(maxElectronPtCut);
+  hNMuonsCut->Fill(nMuonsCut);
+  if(nMuonsCut != 0)
+    hMuon1PtCut->Fill(maxMuonPtCut);
+  hHTCut->Fill(HTCut);
+  hNJetsCut->Fill(nJetsCut);
+  if(nJetsCut != 0)
+    hJet1PtCut->Fill(maxJetPtCut);
+  hNTausCut->Fill(nTausCut);
+  if(nTausCut != 0)
+    hTau1PtCut->Fill(maxTauPtCut);
   //assert(1<0);
 }
 
