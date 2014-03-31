@@ -7,4 +7,5 @@ validator = cms.EDAnalyzer('MyValidator',
   genjets = cms.InputTag('ak5GenJets'),
   genparticles = cms.InputTag("genParticles"),
   pfmet = cms.InputTag("pfMet"),
+  pfcandidates = cms.InputTag("particleFlow"),
 )

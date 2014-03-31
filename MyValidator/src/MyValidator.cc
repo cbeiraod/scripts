@@ -82,6 +82,7 @@ class MyValidator : public edm::EDAnalyzer {
       edm::InputTag inputTag_GenParticles_;
       edm::InputTag inputTag_GenJets_;
       edm::InputTag inputTag_PFMET_;
+      edm::InputTag inputTag_PFCandidates_;
 
 
       TH1F* hGenMET;
@@ -93,6 +94,10 @@ class MyValidator : public edm::EDAnalyzer {
       TH1F* hGenNJets;
       TH1F* hGenJet1Pt;
       TH1F* hPFMET;
+      TH1F* hNElectrons;
+      TH1F* hElectron1Pt;
+      TH1F* hNMuons;
+      TH1F* hMuon1Pt;
 };
 
 //
@@ -115,19 +120,24 @@ MyValidator::MyValidator(const edm::ParameterSet& iConfig)
    inputTag_GenParticles_ = iConfig.getParameter<edm::InputTag>("genparticles");
    inputTag_GenJets_      = iConfig.getParameter<edm::InputTag>("genjets");
    inputTag_PFMET_        = iConfig.getParameter<edm::InputTag>("pfmet");
+   inputTag_PFCandidates_ = iConfig.getParameter<edm::InputTag>("pfcandidates");
 
 
    edm::Service<TFileService> rootFile;
    hGenMET = rootFile->make<TH1F>("hGenMET", "Gen MET;MET (GeV);Events", 300, 0, 3000);
-   hGenNElectrons =rootFile->make<TH1F>("hGenNElectrons", "Gen NElectrons;N;Events", 20, 0, 20);
+   hGenNElectrons = rootFile->make<TH1F>("hGenNElectrons", "Gen NElectrons;N;Events", 20, 0, 20);
    hGenElectron1Pt = rootFile->make<TH1F>("hGenElectron1Pt", "1st Gen electron pt;P_{t} (GeV);Events", 200, 0, 2000);
-   hGenNMuons =rootFile->make<TH1F>("hGenNMuons", "Gen NMuons;N;Events", 20, 0, 20);
+   hGenNMuons = rootFile->make<TH1F>("hGenNMuons", "Gen NMuons;N;Events", 20, 0, 20);
    hGenMuon1Pt = rootFile->make<TH1F>("hGenMuon1Pt", "1st Gen muon pt;P_{t} (GeV);Events", 200, 0, 2000);
    hGenHT = rootFile->make<TH1F>("hGenHT", "Gen HT;HT (GeV);Events", 300, 0, 3000);
    hGenNJets =rootFile->make<TH1F>("hGenNJets", "Gen NJets;N;Events", 50, 0, 50);
    hGenJet1Pt = rootFile->make<TH1F>("hGenJet1Pt", "1st Gen jet pt;P_{t} (GeV);Events", 200, 0, 2000);
 
    hPFMET = rootFile->make<TH1F>("hPFMET", "MET;MET (GeV);Events", 300, 0, 3000);
+   hNElectrons = rootFile->make<TH1F>("hNElectrons", "NElectrons;N;Events", 20, 0, 20);
+   hElectron1Pt = rootFile->make<TH1F>("hElectron1Pt", "1st electron pt;P_{t} (GeV);Events", 200, 0, 2000);
+   hNMuons = rootFile->make<TH1F>("hNMuons", "NMuons;N;Events", 20, 0, 20);
+   hMuon1Pt = rootFile->make<TH1F>("hMuon1Pt", "1st muon pt;P_{t} (GeV);Events", 200, 0, 2000);
 }
 
 
@@ -157,10 +167,22 @@ MyValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   iEvent.getByLabel(inputTag_PFMET_, pfMETs);
   reco::PFMETCollection::const_iterator pfMET = pfMETs->begin();
 
+  edm::Handle<reco::PFCandidateCollection> pfcandidates;
+  iEvent.getByLabel(inputTag_PFCandidates_, pfcandidates);
+  reco::PFCandidateCollection::const_iterator pfcandidate;
+
 
   reco::Particle::PolarLorentzVector genparticleP4 = PolarLorentzVector(0,0,0,0);
-  int    nGenElectrons=0,    nGenMuons=0   , nGenJets=0;
+  int    nGenElectrons=0,    nGenMuons=0,    nGenJets=0;
   double maxGenElectronPt=0, maxGenMuonPt=0, maxGenJetPt=0, genHT=0;
+  reco::Particle::PolarLorentzVector PFcandP4 = PolarLorentzVector(0,0,0,0);
+  int    nElectrons=0,    nMuons=0,    nTaus=0,    nJets=0;
+  double maxElectronPt=0, maxMuonPt=0, maxTauPt=0, maxJetPt=0, HT=0;
+  nTaus=nJets;
+  nJets=nTaus;
+  maxTauPt=maxJetPt;
+  maxJetPt=HT;
+  HT=maxTauPt;
 
 
   for(genparticle = genparticles->begin(); genparticle != genparticles->end(); ++genparticle)
@@ -232,6 +254,27 @@ MyValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       maxGenJetPt = genjet->pt();
   }
 
+  for(pfcandidate = pfcandidates->begin(); pfcandidate != pfcandidates->end(); ++pfcandidate)
+  {
+    PFcandP4 += pfcandidate->p4();
+
+    //if(pfcandidate->pt() < parameter_leptonCut_) continue;
+
+    if(abs(pfcandidate->pdgId()) == 11) // electron
+    {
+      ++nElectrons;
+      if(pfcandidate->pt() > maxElectronPt)
+        maxElectronPt = pfcandidate->pt();
+    }
+
+    if(abs(pfcandidate->pdgId()) == 13) // muon
+    {
+      ++nMuons;
+      if(pfcandidate->pt() > maxMuonPt)
+        maxMuonPt = pfcandidate->pt();
+    }
+  }
+
 
 
   hGenMET->Fill(genparticleP4.pt());
@@ -247,6 +290,12 @@ MyValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     hGenJet1Pt->Fill(maxGenJetPt);
 
   hPFMET->Fill(pfMET->pt());
+  hNElectrons->Fill(nElectrons);
+  if(nElectrons != 0)
+    hElectron1Pt->Fill(maxElectronPt);
+  hNMuons->Fill(nMuons);
+  if(nMuons != 0)
+    hMuon1Pt->Fill(maxMuonPt);
   //assert(1<0);
 }
 
