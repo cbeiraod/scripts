@@ -83,6 +83,7 @@ class MyValidator : public edm::EDAnalyzer {
       edm::InputTag inputTag_GenJets_;
       edm::InputTag inputTag_PFMET_;
       edm::InputTag inputTag_PFCandidates_;
+      edm::InputTag inputTag_PFJets_;
 
 
       TH1F* hGenMET;
@@ -98,6 +99,9 @@ class MyValidator : public edm::EDAnalyzer {
       TH1F* hElectron1Pt;
       TH1F* hNMuons;
       TH1F* hMuon1Pt;
+      TH1F* hHT;
+      TH1F* hNJets;
+      TH1F* hJet1Pt;
 };
 
 //
@@ -121,6 +125,7 @@ MyValidator::MyValidator(const edm::ParameterSet& iConfig)
    inputTag_GenJets_      = iConfig.getParameter<edm::InputTag>("genjets");
    inputTag_PFMET_        = iConfig.getParameter<edm::InputTag>("pfmet");
    inputTag_PFCandidates_ = iConfig.getParameter<edm::InputTag>("pfcandidates");
+   inputTag_PFJets_       = iConfig.getParameter<edm::InputTag>("pfjets");
 
 
    edm::Service<TFileService> rootFile;
@@ -138,6 +143,9 @@ MyValidator::MyValidator(const edm::ParameterSet& iConfig)
    hElectron1Pt = rootFile->make<TH1F>("hElectron1Pt", "1st electron pt;P_{t} (GeV);Events", 200, 0, 2000);
    hNMuons = rootFile->make<TH1F>("hNMuons", "NMuons;N;Events", 20, 0, 20);
    hMuon1Pt = rootFile->make<TH1F>("hMuon1Pt", "1st muon pt;P_{t} (GeV);Events", 200, 0, 2000);
+   hHT = rootFile->make<TH1F>("hHT", "HT;HT (GeV);Events", 300, 0, 3000);
+   hNJets =rootFile->make<TH1F>("hNJets", "NJets;N;Events", 50, 0, 50);
+   hJet1Pt = rootFile->make<TH1F>("hJet1Pt", "1st jet pt;P_{t} (GeV);Events", 200, 0, 2000);
 }
 
 
@@ -171,6 +179,10 @@ MyValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   iEvent.getByLabel(inputTag_PFCandidates_, pfcandidates);
   reco::PFCandidateCollection::const_iterator pfcandidate;
 
+  edm::Handle<reco::PFJetCollection> pfjets;
+  iEvent.getByLabel(inputTag_PFJets_, pfjets);
+  reco::PFJetCollection::const_iterator pfjet;
+
 
   reco::Particle::PolarLorentzVector genparticleP4 = PolarLorentzVector(0,0,0,0);
   int    nGenElectrons=0,    nGenMuons=0,    nGenJets=0;
@@ -179,10 +191,7 @@ MyValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   int    nElectrons=0,    nMuons=0,    nTaus=0,    nJets=0;
   double maxElectronPt=0, maxMuonPt=0, maxTauPt=0, maxJetPt=0, HT=0;
   nTaus=nJets;
-  nJets=nTaus;
   maxTauPt=maxJetPt;
-  maxJetPt=HT;
-  HT=maxTauPt;
 
 
   for(genparticle = genparticles->begin(); genparticle != genparticles->end(); ++genparticle)
@@ -275,6 +284,14 @@ MyValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     }
   }
 
+  for(pfjet = pfjets->begin(); pfjet != pfjets->end(); ++pfjet)
+  {
+    ++nJets;
+    HT += pfjet->pt();
+    if(pfjet->pt() > maxJetPt)
+      maxJetPt = pfjet->pt();
+  }
+
 
 
   hGenMET->Fill(genparticleP4.pt());
@@ -296,6 +313,10 @@ MyValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   hNMuons->Fill(nMuons);
   if(nMuons != 0)
     hMuon1Pt->Fill(maxMuonPt);
+  hHT->Fill(HT);
+  hNJets->Fill(nJets);
+  if(nJets != 0)
+    hJet1Pt->Fill(maxJetPt);
   //assert(1<0);
 }
 
