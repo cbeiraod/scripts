@@ -38,6 +38,12 @@
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 #include "DataFormats/JetReco/interface/GenJet.h"
 
+#include "DataFormats/ParticleFlowCandidate/interface/PFCandidate.h"
+#include "DataFormats/JetReco/interface/PFJetCollection.h"
+#include "DataFormats/METReco/interface/PFMET.h"
+#include "DataFormats/METReco/interface/PFMETCollection.h"
+#include "DataFormats/TauReco/interface/PFTau.h"
+
 #include "DataFormats/Candidate/interface/Particle.h"
 #include "DataFormats/Candidate/interface/Candidate.h"
 #include "DataFormats/Math/interface/LorentzVector.h"
@@ -75,6 +81,7 @@ class MyValidator : public edm::EDAnalyzer {
 
       edm::InputTag inputTag_GenParticles_;
       edm::InputTag inputTag_GenJets_;
+      edm::InputTag inputTag_PFMET_;
 
 
       TH1F* hGenMET;
@@ -85,6 +92,7 @@ class MyValidator : public edm::EDAnalyzer {
       TH1F* hGenHT;
       TH1F* hGenNJets;
       TH1F* hGenJet1Pt;
+      TH1F* hPFMET;
 };
 
 //
@@ -106,17 +114,20 @@ MyValidator::MyValidator(const edm::ParameterSet& iConfig)
 
    inputTag_GenParticles_ = iConfig.getParameter<edm::InputTag>("genparticles");
    inputTag_GenJets_      = iConfig.getParameter<edm::InputTag>("genjets");
+   inputTag_PFMET_        = iConfig.getParameter<edm::InputTag>("pfmet");
 
 
    edm::Service<TFileService> rootFile;
-   hGenMET = rootFile->make<TH1F>("hGenMET", "Gen MET", 300, 0, 3000);
-   hGenNElectrons =rootFile->make<TH1F>("hGenNElectrons", "Gen NElectrons", 20, 0, 20);
-   hGenElectron1Pt = rootFile->make<TH1F>("hGenElectron1Pt", "1st Gen electron pt", 200, 0, 2000);
-   hGenNMuons =rootFile->make<TH1F>("hGenNMuons", "Gen NMuons", 20, 0, 20);
-   hGenMuon1Pt = rootFile->make<TH1F>("hGenMuon1Pt", "1st Gen muon pt", 200, 0, 2000);
-   hGenHT = rootFile->make<TH1F>("hGenHT", "Gen HT", 300, 0, 3000);
-   hGenNJets =rootFile->make<TH1F>("hGenNJets", "Gen NJets", 50, 0, 50);
-   hGenJet1Pt = rootFile->make<TH1F>("hGenJet1Pt", "1st Gen jet pt", 200, 0, 2000);
+   hGenMET = rootFile->make<TH1F>("hGenMET", "Gen MET;MET (GeV);Events", 300, 0, 3000);
+   hGenNElectrons =rootFile->make<TH1F>("hGenNElectrons", "Gen NElectrons;N;Events", 20, 0, 20);
+   hGenElectron1Pt = rootFile->make<TH1F>("hGenElectron1Pt", "1st Gen electron pt;P_{t} (GeV);Events", 200, 0, 2000);
+   hGenNMuons =rootFile->make<TH1F>("hGenNMuons", "Gen NMuons;N;Events", 20, 0, 20);
+   hGenMuon1Pt = rootFile->make<TH1F>("hGenMuon1Pt", "1st Gen muon pt;P_{t} (GeV);Events", 200, 0, 2000);
+   hGenHT = rootFile->make<TH1F>("hGenHT", "Gen HT;HT (GeV);Events", 300, 0, 3000);
+   hGenNJets =rootFile->make<TH1F>("hGenNJets", "Gen NJets;N;Events", 50, 0, 50);
+   hGenJet1Pt = rootFile->make<TH1F>("hGenJet1Pt", "1st Gen jet pt;P_{t} (GeV);Events", 200, 0, 2000);
+
+   hPFMET = rootFile->make<TH1F>("hPFMET", "MET;MET (GeV);Events", 300, 0, 3000);
 }
 
 
@@ -141,6 +152,10 @@ MyValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   edm::Handle<reco::GenJetCollection> genjets;
   iEvent.getByLabel(inputTag_GenJets_, genjets);
   reco::GenJetCollection::const_iterator genjet;
+
+  edm::Handle<reco::PFMETCollection> pfMETs;
+  iEvent.getByLabel(inputTag_PFMET_, pfMETs);
+  reco::PFMETCollection::const_iterator pfMET = pfMETs->begin();
 
 
   reco::Particle::PolarLorentzVector genparticleP4 = PolarLorentzVector(0,0,0,0);
@@ -217,6 +232,8 @@ MyValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       maxGenJetPt = genjet->pt();
   }
 
+
+
   hGenMET->Fill(genparticleP4.pt());
   hGenNElectrons->Fill(nGenElectrons);
   if(nGenElectrons != 0)
@@ -228,6 +245,8 @@ MyValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   hGenNJets->Fill(nGenJets);
   if(nGenJets != 0)
     hGenJet1Pt->Fill(maxGenJetPt);
+
+  hPFMET->Fill(pfMET->pt());
   //assert(1<0);
 }
 
