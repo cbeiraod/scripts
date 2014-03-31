@@ -21,8 +21,8 @@ process.TFileService = cms.Service("TFileService",
 )
 
 
-process.validator = cms.EDAnalyzer('MyValidator',
-)
+#process.validator = cms.EDAnalyzer('MyValidator')
+process.load("UserCode.MyValidator.myvalidator_cfi")
 
 
 process.p = cms.Path(process.validator)
