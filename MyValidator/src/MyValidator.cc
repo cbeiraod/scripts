@@ -92,6 +92,9 @@ class MyValidator : public edm::EDAnalyzer {
       double parameter_JetEtaCut_;
 
 
+      TH1F* stauM;
+      TH1F* neutralinoM;
+
       TH1F* hGenMET;
       TH1F* hGenNElectrons;
       TH1F* hGenElectron1Pt;
@@ -120,6 +123,9 @@ class MyValidator : public edm::EDAnalyzer {
       TH1F* hJet1PtCut;
       TH1F* hNTausCut;
       TH1F* hTau1PtCut;
+
+      TH1F* hInvMass;
+      TH1F* hInvMassCut;
 };
 
 //
@@ -135,7 +141,7 @@ class MyValidator : public edm::EDAnalyzer {
 //
 MyValidator::MyValidator(const edm::ParameterSet& iConfig)
 {
-   verbose = iConfig.getParameter<bool>("verbose");
+   verbose = iConfig.getUntrackedParameter<bool>("verbose");
 
    param_modelTag_ = iConfig.getParameter<std::string>("modelTag");
 
@@ -184,6 +190,12 @@ MyValidator::MyValidator(const edm::ParameterSet& iConfig)
    hJet1PtCut = rootFile->make<TH1F>("hJet1PtCut", "1st jet pt;P_{t} (GeV);Events", 200, 0, 2000);
    hNTausCut = rootFile->make<TH1F>("hNTausCut", "NTaus;N;Events", 100, 0, 100);
    hTau1PtCut = rootFile->make<TH1F>("hTau1PtCut", "1st tau pt;P_{t} (GeV);Events", 200, 0, 2000);
+
+   stauM = rootFile->make<TH1F>("stauM", "stau Mass;M (GeV);", 500, 0, 500);
+   neutralinoM = rootFile->make<TH1F>("neutralinoM", "neutralino Mass;M (GeV);", 500, 0, 500);
+
+   hInvMass = rootFile->make<TH1F>("InvMass", "LepTau Invariant Mass;M (GeV);Events", 200, 0, 200);
+   hInvMassCut = rootFile->make<TH1F>("InvMassCut", "LepTau Invariant Mass;M (GeV);Events", 200, 0, 200);
 }
 
 
@@ -235,9 +247,20 @@ MyValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   int    nElectronsCut=0,    nMuonsCut=0,    nTausCut=0,    nJetsCut=0;
   double maxElectronPtCut=0, maxMuonPtCut=0, maxTauPtCut=0, maxJetPtCut=0, HTCut=0;
 
+  reco::Particle::PolarLorentzVector lepton=PolarLorentzVector(0,0,0,0), tau=PolarLorentzVector(0,0,0,0);
+  reco::Particle::PolarLorentzVector leptonCut=PolarLorentzVector(0,0,0,0), tauCut=PolarLorentzVector(0,0,0,0);
+
 
   for(genparticle = genparticles->begin(); genparticle != genparticles->end(); ++genparticle)
   {
+    if(abs(genparticle->pdgId()) == 1000022) // neutralino
+    {
+      neutralinoM->Fill((genparticle->p4()).M());
+    }
+    if(abs(genparticle->pdgId()) == 1000015) // stau
+    {
+      stauM->Fill((genparticle->p4()).M());
+    }
     if(genparticle->status() == 1) //Only "stable particles"
     {
       if(abs(genparticle->pdgId()) != 12      && // electron neutrino
@@ -313,14 +336,21 @@ MyValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     {
       ++nElectrons;
       if(pfcandidate->pt() > maxElectronPt)
+      {
         maxElectronPt = pfcandidate->pt();
+        lepton = pfcandidate->p4();
+      }
     }
 
     if(abs(pfcandidate->pdgId()) == 13) // muon
     {
       ++nMuons;
       if(pfcandidate->pt() > maxMuonPt)
+      {
         maxMuonPt = pfcandidate->pt();
+        if(maxMuonPt > maxElectronPt)
+          lepton = pfcandidate->p4();
+      }
     }
 
     if(pfcandidate->pt() < parameter_LeptonCut_) continue;
@@ -329,14 +359,21 @@ MyValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     {
       ++nElectronsCut;
       if(pfcandidate->pt() > maxElectronPtCut)
+      {
         maxElectronPtCut = pfcandidate->pt();
+        leptonCut = pfcandidate->p4();
+      }
     }
 
     if(abs(pfcandidate->pdgId()) == 13) // muon
     {
       ++nMuonsCut;
       if(pfcandidate->pt() > maxMuonPtCut)
+      {
         maxMuonPtCut = pfcandidate->pt();
+        if(maxMuonPtCut > maxElectronPtCut)
+          leptonCut = pfcandidate->p4();
+      }
     }
   }
 
@@ -360,13 +397,19 @@ MyValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   {
     ++nTaus;
     if(pftau->pt() > maxTauPt)
+    {
       maxTauPt = pftau->pt();
+      tau = pftau->p4();
+    }
 
     if(pftau->pt() < parameter_TauCut_) continue;
 
     ++nTausCut;
     if(pftau->pt() > maxTauPtCut)
+    {
       maxTauPtCut = pftau->pt();
+      tauCut = pftau->p4();
+    }
   }
 
 
@@ -411,6 +454,11 @@ MyValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   hNTausCut->Fill(nTausCut);
   if(nTausCut != 0)
     hTau1PtCut->Fill(maxTauPtCut);
+
+  if(nTaus != 0 && nMuons+nElectrons != 0)
+    hInvMass->Fill((lepton+tau).M());
+  if(nTausCut != 0 && nMuonsCut+nElectronsCut != 0)
+    hInvMassCut->Fill((leptonCut+tauCut).M());
   //assert(1<0);
 }
 
