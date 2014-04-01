@@ -21,7 +21,11 @@
 // system include files
 #include <memory>
 #include <string>
+#include <vector>
 #include <iostream>
+#include <map>
+//#include <regex>
+#include <boost/regex.hpp>
 
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
@@ -49,9 +53,17 @@
 #include "DataFormats/Math/interface/LorentzVector.h"
 
 
+//TriggerEvent
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 #include "DataFormats/HLTReco/interface/TriggerEvent.h"
 
+//TriggerResults
+#include "FWCore/Common/interface/TriggerNames.h"
+#include "FWCore/Common/interface/TriggerResultsByName.h"
+#include "HLTrigger/HLTcore/interface/HLTConfigProvider.h"
+#include "DataFormats/Common/interface/TriggerResults.h"
+
+#include "FWCore/Utilities/interface/RegexMatch.h"
 
 
 //
@@ -90,6 +102,16 @@ class MyValidator : public edm::EDAnalyzer {
       edm::InputTag inputTag_PFJets_;
       edm::InputTag inputTag_PFTaus_;
       edm::InputTag inputTag_Trigger_;
+      edm::InputTag inputTag_TriggerResults_;
+      edm::InputTag inputTag_TriggerEvent_;
+
+      std::string parameter_ProcessName_;
+      std::string parameter_TriggerName_;
+
+      std::vector<std::string>  HLTPatterns_;
+      std::vector<std::string>  HLTPathsByName_;
+      std::vector<unsigned int> HLTPathsByIndex_;
+      std::vector<std::string>  HLTPaths_;
 
       double parameter_LeptonCut_;
       double parameter_TauCut_;
@@ -131,6 +153,16 @@ class MyValidator : public edm::EDAnalyzer {
 
       TH1F* hInvMass;
       TH1F* hInvMassCut;
+
+
+      edm::Handle<edm::TriggerResults>   triggerResultsHandle_;
+      edm::Handle<trigger::TriggerEvent> triggerEventHandle_;
+      HLTConfigProvider hltConfig_;
+
+      bool doAllHLT;
+
+      unsigned long long nEvents;
+      std::map<std::string, unsigned long long> filteredEvents;
 };
 
 //
@@ -156,7 +188,23 @@ MyValidator::MyValidator(const edm::ParameterSet& iConfig)
    inputTag_PFCandidates_ = iConfig.getParameter<edm::InputTag>("pfcandidates");
    inputTag_PFJets_       = iConfig.getParameter<edm::InputTag>("pfjets");
    inputTag_PFTaus_       = iConfig.getParameter<edm::InputTag>("pftaus");
-   inputTag_Trigger_      = iConfig.getParameter<edm::InputTag>("trigger");
+
+   inputTag_Trigger_        = iConfig.getParameter<edm::InputTag>("trigger");
+   inputTag_TriggerResults_ = iConfig.getParameter<edm::InputTag>("triggerResults");
+   inputTag_TriggerEvent_   = iConfig.getParameter<edm::InputTag>("triggerEvent");
+   parameter_TriggerName_   = iConfig.getParameter<std::string>("triggerName");
+   parameter_ProcessName_   = iConfig.getParameter<std::string>("processName");
+   HLTPatterns_             = iConfig.getParameter<std::vector<std::string> >("HLTPaths");
+   doAllHLT                 = false;
+   for(auto i = HLTPatterns_.begin(); i != HLTPatterns_.end(); ++i)
+   {
+     if(*i == "@")
+     {
+       doAllHLT = true;
+       HLTPatterns_.clear();
+       break;
+     }
+   }
 
    parameter_LeptonCut_ = iConfig.getParameter<double>("leptonCut");
    parameter_TauCut_    = iConfig.getParameter<double>("tauCut");
@@ -467,50 +515,54 @@ MyValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     hInvMassCut->Fill((leptonCut+tauCut).M());
 
 
-  std::cout << "Content of TriggerEvent: " << inputTag_Trigger_.encode() << std::endl;
+  if(verbose)
+    std::cout << "Content of TriggerEvent: " << inputTag_Trigger_.encode() << std::endl;
 
   edm::Handle<trigger::TriggerEvent> triggerHandle;
   iEvent.getByLabel(inputTag_Trigger_, triggerHandle);
   if(triggerHandle.isValid())
   {
-    std::cout << "\tUsed Processname: " << triggerHandle->usedProcessName() << std::endl;
-
-    const trigger::size_type nC(triggerHandle->sizeCollections());
-    std::cout << "\tNumber of packed Collections: " << nC << std::endl;
-    std::cout << "\t  The Collections: #, tag, 1-past-end index" << std::endl;
-    for(trigger::size_type iC=0; iC!=nC; ++iC)
+    if(verbose)
     {
-      std::cout << "\t  " << iC << ", " << triggerHandle->collectionTag(iC).encode() << ", " << triggerHandle->collectionKey(iC) << std::endl;
-    }
+      std::cout << "\tUsed Processname: " << triggerHandle->usedProcessName() << std::endl;
 
-    const trigger::size_type nO(triggerHandle->sizeObjects());
-    std::cout << "\tNumber of TriggerObjects: " << nO << std::endl;
-    std::cout << "\t  The TriggerObjects: #, id, pt, eta, phi, mass" << std::endl;
-    const trigger::TriggerObjectCollection& TOC(triggerHandle->getObjects());
-    for(trigger::size_type iO=0; iO!=nO; ++iO)
-    {
-      const trigger::TriggerObject& TO(TOC[iO]);
-      std::cout << "\t  " << iO << " " << TO.id() << " " << TO.pt() << " " << TO.eta() << " " << TO.phi() << " " << TO.mass() << std::endl;
-    }
-
-    const trigger::size_type nF(triggerHandle->sizeFilters());
-    std::cout << "\tNumber of TriggerFilters: " << nF << std::endl;
-    std::cout << "\t  The Filters: #, tag, #ids/#keys, the id/key pairs" << std::endl;
-    for(trigger::size_type iF=0; iF!=nF; ++iF)
-    {
-      const trigger::Vids& VIDS (triggerHandle->filterIds(iF));
-      const trigger::Keys& KEYS(triggerHandle->filterKeys(iF));
-      const trigger::size_type nI(VIDS.size());
-      const trigger::size_type nK(KEYS.size());
-
-      std::cout << "\t  " << iF << " " << triggerHandle->filterTag(iF).encode() << " " << nI << "/" << nK << " the pairs: ";
-      const trigger::size_type n((nK>nI)?nK:nI);
-      for(trigger::size_type i = 0; i != n; ++i)
+      const trigger::size_type nC(triggerHandle->sizeCollections());
+      std::cout << "\tNumber of packed Collections: " << nC << std::endl;
+      std::cout << "\t  The Collections: #, tag, 1-past-end index" << std::endl;
+      for(trigger::size_type iC=0; iC!=nC; ++iC)
       {
-        std::cout << " " << VIDS[i] << "/" << KEYS[i];
+        std::cout << "\t  " << iC << ", " << triggerHandle->collectionTag(iC).encode() << ", " << triggerHandle->collectionKey(iC) << std::endl;
       }
-      std::cout << std::endl;
-      assert(nK == nI);
+
+      const trigger::size_type nO(triggerHandle->sizeObjects());
+      std::cout << "\tNumber of TriggerObjects: " << nO << std::endl;
+      std::cout << "\t  The TriggerObjects: #, id, pt, eta, phi, mass" << std::endl;
+      const trigger::TriggerObjectCollection& TOC(triggerHandle->getObjects());
+      for(trigger::size_type iO=0; iO!=nO; ++iO)
+      {
+        const trigger::TriggerObject& TO(TOC[iO]);
+        std::cout << "\t  " << iO << " " << TO.id() << " " << TO.pt() << " " << TO.eta() << " " << TO.phi() << " " << TO.mass() << std::endl;
+      }
+
+      const trigger::size_type nF(triggerHandle->sizeFilters());
+      std::cout << "\tNumber of TriggerFilters: " << nF << std::endl;
+      std::cout << "\t  The Filters: #, tag, #ids/#keys, the id/key pairs" << std::endl;
+      for(trigger::size_type iF=0; iF!=nF; ++iF)
+      {
+        const trigger::Vids& VIDS (triggerHandle->filterIds(iF));
+        const trigger::Keys& KEYS(triggerHandle->filterKeys(iF));
+        const trigger::size_type nI(VIDS.size());
+        const trigger::size_type nK(KEYS.size());
+
+        std::cout << "\t  " << iF << " " << triggerHandle->filterTag(iF).encode() << " " << nI << "/" << nK << " the pairs: ";
+        const trigger::size_type n((nK>nI)?nK:nI);
+        for(trigger::size_type i = 0; i != n; ++i)
+        {
+          std::cout << " " << VIDS[i] << "/" << KEYS[i];
+        }
+        std::cout << std::endl;
+        assert(nK == nI);
+      }
     }
   }
   else
@@ -518,7 +570,82 @@ MyValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     std::cout << "Handle invalid! Check InputTag provided." << std::endl;
     assert(triggerHandle.isValid());
   }
-  assert(1<0);
+
+
+//  edm::Handle<edm::TriggerResults> trigResults;
+//  edm::InputTag trigResultsTag("TriggerResults","","HLT");
+//  iEvent.getByLabel(trigResultsTag,trigResults);
+
+  iEvent.getByLabel(inputTag_TriggerResults_,triggerResultsHandle_);
+  if(!triggerResultsHandle_.isValid())
+  {
+    std::cout << "Error in getting TriggerResults product from Event!" << std::endl;
+    assert(triggerResultsHandle_.isValid());
+  }
+  const edm::TriggerNames& trigNames = iEvent.triggerNames(*triggerResultsHandle_);
+
+  unsigned int n = trigNames.size();
+  if(verbose)
+  {
+    std::cout << "N trig: " << n << std::endl;
+    for(unsigned int i  = 0; i < n; ++i)
+    {
+      std::cout << "\t" << trigNames.triggerName(i) << ": ";
+      std::cout << "WasRun=" << triggerResultsHandle_->wasrun(i) << "; ";
+      std::cout << "Accept=" << triggerResultsHandle_->accept(i) << "; ";
+      std::cout << "Error=" << triggerResultsHandle_->error(i) << "; " << std::endl;
+    }
+  }
+  HLTPathsByName_.clear();
+  HLTPathsByIndex_.clear();
+  HLTPaths_.clear();
+  if(doAllHLT)
+  {
+    for(unsigned int i = 0; i < n; ++i)
+    {
+      HLTPathsByName_.push_back(trigNames.triggerName(i));
+      HLTPathsByIndex_.push_back(i);
+    }
+  }
+  else
+  {
+    for(auto pattern = HLTPatterns_.begin(); pattern != HLTPatterns_.end(); ++pattern)
+    {
+      if(edm::is_glob(*pattern))
+      {
+        std::vector< std::vector<std::string>::const_iterator > matches = edm::regexMatch(trigNames.triggerNames(), *pattern);
+        if(!matches.empty())
+          for(auto i = matches.begin(); i != matches.end(); ++i)
+            HLTPathsByName_.push_back(*(*i));
+      }
+      else
+      {
+        HLTPathsByName_.push_back(*pattern);
+      }
+    }
+
+    HLTPathsByIndex_.resize(HLTPathsByName_.size());
+    for(unsigned int i = 0; i < HLTPathsByName_.size(); ++i)
+    {
+      HLTPathsByIndex_[i] = trigNames.triggerIndex(HLTPathsByName_[i]);
+    }
+  }
+  HLTPaths_.resize(HLTPathsByName_.size());
+  boost::regex re ("(^.+)(_v[0-9]+$)");
+  std::string temp = "$1";
+  for(unsigned int i = 0; i < HLTPathsByName_.size(); ++i)
+  {
+    if(HLTPathsByIndex_[i] >= n) continue;
+    HLTPaths_[i] = boost::regex_replace(HLTPathsByName_[i], re, temp);
+    if(triggerResultsHandle_->accept(HLTPathsByIndex_[i]))
+    {
+      if(filteredEvents.find(HLTPaths_[i]) == filteredEvents.end())
+        filteredEvents[HLTPaths_[i]] = 0;
+      filteredEvents[HLTPaths_[i]] = filteredEvents[HLTPaths_[i]] + 1;
+    }
+  }
+  ++nEvents;
+//  assert(1<0);
 }
 
 
@@ -526,18 +653,54 @@ MyValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 void 
 MyValidator::beginJob()
 {
+  nEvents = 0;
 }
 
 // ------------ method called once each job just after ending the event loop  ------------
 void 
 MyValidator::endJob() 
 {
+  std::cout << "Total events: " << nEvents << std::endl;
+
+  for(auto i = filteredEvents.begin(); i != filteredEvents.end(); ++i)
+  {
+    std::cout << "  " << i->first << ": " << i->second << " => " << ((double)(i->second) * 100.)/nEvents << "%" << std::endl;
+  }
 }
 
 // ------------ method called when starting to processes a run  ------------
 void 
-MyValidator::beginRun(edm::Run const&, edm::EventSetup const&)
+MyValidator::beginRun(edm::Run const& iRun, edm::EventSetup const& iSetup)
 {
+//  bool changed(true);
+//  if(hltConfig_.init(iRun,iSetup,parameter_ProcessName_,changed))
+//  {
+//    if(changed)
+//    {
+//      if(parameter_TriggerName_!="@")
+//      {
+//        const unsigned int n(hltConfig_.size());
+//        const unsigned int triggerIndex(hltConfig_.triggerIndex(parameter_TriggerName_));
+//        if(triggerIndex >= n)
+//        {
+//          std::cout << "TriggerName: " << parameter_TriggerName_ << " not available in (new) config!" << std::endl;
+//          std::cout << "Available TriggerNames are:" << std::endl;
+//          hltConfig_.dump("Triggers");
+//        }
+//      }
+//    }
+//    hltConfig_.dump("ProcessName");
+//    hltConfig_.dump("GlobalTag");
+//    hltConfig_.dump("TableName");
+//    hltConfig_.dump("Streams");
+//    hltConfig_.dump("Datasets");
+//    hltConfig_.dump("PrescaleTable");
+//    hltConfig_.dump("ProcessPSet");
+//  }
+//  else
+//  {
+//    std::cout << "Config extraction failed with process name: " << parameter_ProcessName_ << std::endl;
+//  }
 }
 
 // ------------ method called when ending the processing of a run  ------------
