@@ -49,6 +49,10 @@
 #include "DataFormats/Math/interface/LorentzVector.h"
 
 
+#include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
+#include "DataFormats/HLTReco/interface/TriggerEvent.h"
+
+
 
 //
 // class declaration
@@ -85,6 +89,7 @@ class MyValidator : public edm::EDAnalyzer {
       edm::InputTag inputTag_PFCandidates_;
       edm::InputTag inputTag_PFJets_;
       edm::InputTag inputTag_PFTaus_;
+      edm::InputTag inputTag_Trigger_;
 
       double parameter_LeptonCut_;
       double parameter_TauCut_;
@@ -151,6 +156,7 @@ MyValidator::MyValidator(const edm::ParameterSet& iConfig)
    inputTag_PFCandidates_ = iConfig.getParameter<edm::InputTag>("pfcandidates");
    inputTag_PFJets_       = iConfig.getParameter<edm::InputTag>("pfjets");
    inputTag_PFTaus_       = iConfig.getParameter<edm::InputTag>("pftaus");
+   inputTag_Trigger_      = iConfig.getParameter<edm::InputTag>("trigger");
 
    parameter_LeptonCut_ = iConfig.getParameter<double>("leptonCut");
    parameter_TauCut_    = iConfig.getParameter<double>("tauCut");
@@ -459,7 +465,60 @@ MyValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     hInvMass->Fill((lepton+tau).M());
   if(nTausCut != 0 && nMuonsCut+nElectronsCut != 0)
     hInvMassCut->Fill((leptonCut+tauCut).M());
-  //assert(1<0);
+
+
+  std::cout << "Content of TriggerEvent: " << inputTag_Trigger_.encode() << std::endl;
+
+  edm::Handle<trigger::TriggerEvent> triggerHandle;
+  iEvent.getByLabel(inputTag_Trigger_, triggerHandle);
+  if(triggerHandle.isValid())
+  {
+    std::cout << "\tUsed Processname: " << triggerHandle->usedProcessName() << std::endl;
+
+    const trigger::size_type nC(triggerHandle->sizeCollections());
+    std::cout << "\tNumber of packed Collections: " << nC << std::endl;
+    std::cout << "\t  The Collections: #, tag, 1-past-end index" << std::endl;
+    for(trigger::size_type iC=0; iC!=nC; ++iC)
+    {
+      std::cout << "\t  " << iC << ", " << triggerHandle->collectionTag(iC).encode() << ", " << triggerHandle->collectionKey(iC) << std::endl;
+    }
+
+    const trigger::size_type nO(triggerHandle->sizeObjects());
+    std::cout << "\tNumber of TriggerObjects: " << nO << std::endl;
+    std::cout << "\t  The TriggerObjects: #, id, pt, eta, phi, mass" << std::endl;
+    const trigger::TriggerObjectCollection& TOC(triggerHandle->getObjects());
+    for(trigger::size_type iO=0; iO!=nO; ++iO)
+    {
+      const trigger::TriggerObject& TO(TOC[iO]);
+      std::cout << "\t  " << iO << " " << TO.id() << " " << TO.pt() << " " << TO.eta() << " " << TO.phi() << " " << TO.mass() << std::endl;
+    }
+
+    const trigger::size_type nF(triggerHandle->sizeFilters());
+    std::cout << "\tNumber of TriggerFilters: " << nF << std::endl;
+    std::cout << "\t  The Filters: #, tag, #ids/#keys, the id/key pairs" << std::endl;
+    for(trigger::size_type iF=0; iF!=nF; ++iF)
+    {
+      const trigger::Vids& VIDS (triggerHandle->filterIds(iF));
+      const trigger::Keys& KEYS(triggerHandle->filterKeys(iF));
+      const trigger::size_type nI(VIDS.size());
+      const trigger::size_type nK(KEYS.size());
+
+      std::cout << "\t  " << iF << " " << triggerHandle->filterTag(iF).encode() << " " << nI << "/" << nK << " the pairs: ";
+      const trigger::size_type n((nK>nI)?nK:nI);
+      for(trigger::size_type i = 0; i != n; ++i)
+      {
+        std::cout << " " << VIDS[i] << "/" << KEYS[i];
+      }
+      std::cout << std::endl;
+      assert(nK == nI);
+    }
+  }
+  else
+  {
+    std::cout << "Handle invalid! Check InputTag provided." << std::endl;
+    assert(triggerHandle.isValid());
+  }
+  assert(1<0);
 }
 
 

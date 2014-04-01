@@ -1,7 +1,7 @@
 import FWCore.ParameterSet.Config as cms
 
 validator = cms.EDAnalyzer('MyValidator',
-  verbose = cms.bool(False),
+  verbose = cms.untracked.bool(False),
   modelTag = cms.string(""),
 
   genjets = cms.InputTag('ak5GenJets'),
@@ -16,4 +16,6 @@ validator = cms.EDAnalyzer('MyValidator',
   tauCut = cms.double(40),
   jetCut = cms.double(40),
   jetEtaCut = cms.double(2.1),
+
+  trigger = cms.InputTag("hltTriggerSummaryAOD"),
 )
