@@ -11,3 +11,7 @@ lamda24:
 
 LHEtoAODSIM:
   Scripts for producing AODSIM output from LHE files, created when working on the stau-stau analysis
+
+MyValidator:
+  A module for CMSSW to plot some basic quatities from AODSIM files.
+  Also a set of macros to export these plots to images and combine several of the plots in a single histogram
