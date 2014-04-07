@@ -14,6 +14,14 @@ if [ -d $1/plots ]; then
 fi
 mkdir $1/plots
 
+if [ -d $1/plotsCombined ]; then
+  rm -Rf $1/plotsCombined
+fi
+mkdir $1/plotsCombined
+
+var="root -b -q 'combinedPlots.cpp+(\"$1/plotsCombined\", \"$1\")'"
+eval $var
+
 for file in $1/*.root; do
 #  file=$(echo $file | sed 's://:/:')
   BASENAME=$(basename $file)
