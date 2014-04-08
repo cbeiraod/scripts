@@ -47,7 +47,7 @@ int exportPlots(std::string outdir, std::string rootFile, std::string basename)
   plots["hTau1PtCut"]      = "Tau1Pt_Cut";
   plots["stauM"]           = "StauM";
   plots["neutralinoM"]     = "NeutralinoM";
-  plots["InvMass"]         = "InvMas";
+  plots["InvMass"]         = "InvMass";
   plots["InvMassCut"]      = "InvMass_Cut";
 
   TCanvas c1("c1", "c1", 800, 600);

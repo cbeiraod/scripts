@@ -79,7 +79,7 @@ int combinedPlots(std::string outdir, std::string rootDir)
     plots["hJet1PtCut"]      = "Jet1Pt_Cut";
     plots["hNTausCut"]       = "NTaus_Cut";
     plots["hTau1PtCut"]      = "Tau1Pt_Cut";
-    plots["InvMass"]         = "InvMas";
+    plots["InvMass"]         = "InvMass";
     plots["InvMassCut"]      = "InvMass_Cut";
   }
 

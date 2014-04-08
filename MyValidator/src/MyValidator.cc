@@ -220,42 +220,42 @@ MyValidator::MyValidator(const edm::ParameterSet& iConfig)
 
 
    edm::Service<TFileService> rootFile;
-   hGenMET = rootFile->make<TH1F>("hGenMET", "Gen MET;MET (GeV);Events", 300, 0, 3000);
-   hGenNElectrons = rootFile->make<TH1F>("hGenNElectrons", "Gen NElectrons;N;Events", 20, 0, 20);
-   hGenElectron1Pt = rootFile->make<TH1F>("hGenElectron1Pt", "1st Gen electron pt;P_{t} (GeV);Events", 200, 0, 2000);
-   hGenNMuons = rootFile->make<TH1F>("hGenNMuons", "Gen NMuons;N;Events", 20, 0, 20);
-   hGenMuon1Pt = rootFile->make<TH1F>("hGenMuon1Pt", "1st Gen muon pt;P_{t} (GeV);Events", 200, 0, 2000);
-   hGenHT = rootFile->make<TH1F>("hGenHT", "Gen HT;HT (GeV);Events", 300, 0, 3000);
+   hGenMET = rootFile->make<TH1F>("hGenMET", "Gen MET;MET (GeV);Events", 70, 0, 700);
+   hGenNElectrons = rootFile->make<TH1F>("hGenNElectrons", "Gen NElectrons;N;Events", 12, 0, 12);
+   hGenElectron1Pt = rootFile->make<TH1F>("hGenElectron1Pt", "1st Gen electron pt;P_{t} (GeV);Events", 60, 0, 600);
+   hGenNMuons = rootFile->make<TH1F>("hGenNMuons", "Gen NMuons;N;Events", 5, 0, 5);
+   hGenMuon1Pt = rootFile->make<TH1F>("hGenMuon1Pt", "1st Gen muon pt;P_{t} (GeV);Events", 60, 0, 600);
+   hGenHT = rootFile->make<TH1F>("hGenHT", "Gen HT;HT (GeV);Events", 200, 0, 2000);
    hGenNJets = rootFile->make<TH1F>("hGenNJets", "Gen NJets;N;Events", 100, 0, 100);
-   hGenJet1Pt = rootFile->make<TH1F>("hGenJet1Pt", "1st Gen jet pt;P_{t} (GeV);Events", 200, 0, 2000);
+   hGenJet1Pt = rootFile->make<TH1F>("hGenJet1Pt", "1st Gen jet pt;P_{t} (GeV);Events", 80, 0, 800);
 
-   hPFMET = rootFile->make<TH1F>("hPFMET", "MET;MET (GeV);Events", 300, 0, 3000);
-   hNElectrons = rootFile->make<TH1F>("hNElectrons", "NElectrons;N;Events", 20, 0, 20);
-   hElectron1Pt = rootFile->make<TH1F>("hElectron1Pt", "1st electron pt;P_{t} (GeV);Events", 200, 0, 2000);
-   hNMuons = rootFile->make<TH1F>("hNMuons", "NMuons;N;Events", 20, 0, 20);
-   hMuon1Pt = rootFile->make<TH1F>("hMuon1Pt", "1st muon pt;P_{t} (GeV);Events", 200, 0, 2000);
-   hHT = rootFile->make<TH1F>("hHT", "HT;HT (GeV);Events", 300, 0, 3000);
+   hPFMET = rootFile->make<TH1F>("hPFMET", "MET;MET (GeV);Events", 70, 0, 700);
+   hNElectrons = rootFile->make<TH1F>("hNElectrons", "NElectrons;N;Events", 12, 0, 12);
+   hElectron1Pt = rootFile->make<TH1F>("hElectron1Pt", "1st electron pt;P_{t} (GeV);Events", 60, 0, 600);
+   hNMuons = rootFile->make<TH1F>("hNMuons", "NMuons;N;Events", 5, 0, 5);
+   hMuon1Pt = rootFile->make<TH1F>("hMuon1Pt", "1st muon pt;P_{t} (GeV);Events", 60, 0, 600);
+   hHT = rootFile->make<TH1F>("hHT", "HT;HT (GeV);Events", 200, 0, 2000);
    hNJets = rootFile->make<TH1F>("hNJets", "NJets;N;Events", 100, 0, 100);
-   hJet1Pt = rootFile->make<TH1F>("hJet1Pt", "1st jet pt;P_{t} (GeV);Events", 200, 0, 2000);
+   hJet1Pt = rootFile->make<TH1F>("hJet1Pt", "1st jet pt;P_{t} (GeV);Events", 80, 0, 800);
 
    hNTaus = rootFile->make<TH1F>("hNTaus", "NTaus;N;Events", 100, 0, 100);
-   hTau1Pt = rootFile->make<TH1F>("hTau1Pt", "1st tau pt;P_{t} (GeV);Events", 200, 0, 2000);
+   hTau1Pt = rootFile->make<TH1F>("hTau1Pt", "1st tau pt;P_{t} (GeV);Events", 70, 0, 700);
 
-   hNElectronsCut = rootFile->make<TH1F>("hNElectronsCut", "NElectrons;N;Events", 20, 0, 20);
-   hElectron1PtCut = rootFile->make<TH1F>("hElectron1PtCut", "1st electron pt;P_{t} (GeV);Events", 200, 0, 2000);
-   hNMuonsCut = rootFile->make<TH1F>("hNMuonsCut", "NMuons;N;Events", 20, 0, 20);
-   hMuon1PtCut = rootFile->make<TH1F>("hMuon1PtCut", "1st muon pt;P_{t} (GeV);Events", 200, 0, 2000);
-   hHTCut = rootFile->make<TH1F>("hHTCut", "HT;HT (GeV);Events", 300, 0, 3000);
+   hNElectronsCut = rootFile->make<TH1F>("hNElectronsCut", "NElectrons;N;Events", 12, 0, 12);
+   hElectron1PtCut = rootFile->make<TH1F>("hElectron1PtCut", "1st electron pt;P_{t} (GeV);Events", 60, 0, 600);
+   hNMuonsCut = rootFile->make<TH1F>("hNMuonsCut", "NMuons;N;Events", 5, 0, 5);
+   hMuon1PtCut = rootFile->make<TH1F>("hMuon1PtCut", "1st muon pt;P_{t} (GeV);Events", 60, 0, 600);
+   hHTCut = rootFile->make<TH1F>("hHTCut", "HT;HT (GeV);Events", 200, 0, 2000);
    hNJetsCut = rootFile->make<TH1F>("hNJetsCut", "NJets;N;Events", 100, 0, 100);
-   hJet1PtCut = rootFile->make<TH1F>("hJet1PtCut", "1st jet pt;P_{t} (GeV);Events", 200, 0, 2000);
+   hJet1PtCut = rootFile->make<TH1F>("hJet1PtCut", "1st jet pt;P_{t} (GeV);Events", 80, 0, 800);
    hNTausCut = rootFile->make<TH1F>("hNTausCut", "NTaus;N;Events", 100, 0, 100);
-   hTau1PtCut = rootFile->make<TH1F>("hTau1PtCut", "1st tau pt;P_{t} (GeV);Events", 200, 0, 2000);
+   hTau1PtCut = rootFile->make<TH1F>("hTau1PtCut", "1st tau pt;P_{t} (GeV);Events", 70, 0, 700);
 
    stauM = rootFile->make<TH1F>("stauM", "stau Mass;M (GeV);", 500, 0, 500);
    neutralinoM = rootFile->make<TH1F>("neutralinoM", "neutralino Mass;M (GeV);", 500, 0, 500);
 
-   hInvMass = rootFile->make<TH1F>("InvMass", "LepTau Invariant Mass;M (GeV);Events", 200, 0, 200);
-   hInvMassCut = rootFile->make<TH1F>("InvMassCut", "LepTau Invariant Mass;M (GeV);Events", 200, 0, 200);
+   hInvMass = rootFile->make<TH1F>("InvMass", "LepTau Invariant Mass;M (GeV);Events", 30, 0, 300);
+   hInvMassCut = rootFile->make<TH1F>("InvMassCut", "LepTau Invariant Mass;M (GeV);Events", 30, 0, 300);
 }
 
 

@@ -14,8 +14,8 @@ fi
 STARTDIR=$(pwd -P)
 
 cd $CMSSW_BASE/src
-#scram b clean
-#scram b -j 8
+scram b clean
+scram b -j 8
 cd $STARTDIR
 
 BaseFolder=$(echo $1 | sed 's://:/:')
