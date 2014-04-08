@@ -90,6 +90,8 @@ class MyValidator : public edm::EDAnalyzer {
       virtual void beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&);
       virtual void endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&);
 
+      void printParticleAndDaughters(const reco::GenParticle* particle, std::string prefix, bool last=false);
+
       // ----------member data ---------------------------
       bool verbose;
 
@@ -117,6 +119,8 @@ class MyValidator : public edm::EDAnalyzer {
       double parameter_TauCut_;
       double parameter_JetCut_;
       double parameter_JetEtaCut_;
+
+      bool parameter_printTree_;
 
 
       TH1F* stauM;
@@ -210,6 +214,8 @@ MyValidator::MyValidator(const edm::ParameterSet& iConfig)
    parameter_TauCut_    = iConfig.getParameter<double>("tauCut");
    parameter_JetCut_    = iConfig.getParameter<double>("jetCut");
    parameter_JetEtaCut_ = iConfig.getParameter<double>("jetEtaCut");
+
+   parameter_printTree_ = iConfig.getUntrackedParameter<bool>("printTree");
 
 
 
@@ -645,7 +651,125 @@ MyValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     }
   }
   ++nEvents;
+
+  if(parameter_printTree_)
+  {
+    std::cout << "Event " << iEvent.id() << std::endl;
+
+    std::vector<const reco::GenParticle*> staus;
+    std::vector<const reco::GenParticle*> other;
+    for(genparticle = genparticles->begin(); genparticle != genparticles->end(); ++genparticle)
+    {
+      if(abs(genparticle->pdgId()) == 1000015 && genparticle->status() == 3) //Find staus from Matrix Element, save them to start tree creation
+      {
+        staus.push_back(& * genparticle);
+      }
+      else
+        other.push_back(& * genparticle);
+    }
+
+    for(size_t i = 0; i < staus.size(); ++i)
+    {
+      if(i == staus.size()-1)
+        printParticleAndDaughters((staus[i]), "  ", true);
+      else
+        printParticleAndDaughters((staus[i]), "  ");
+    }
+
+    std::cout << std::endl;
+  }
 //  assert(1<0);
+}
+
+void MyValidator::printParticleAndDaughters(const reco::GenParticle* particle, std::string prefix, bool last)
+{
+  std::cout << prefix;
+  if(last)
+    std::cout << "╚ ";
+  else
+    std::cout << "╠ ";
+
+  bool sign = (particle->pdgId()>0);
+  switch(abs(particle->pdgId()))
+  {
+  case 11:
+    std::cout << "Electron";
+    if(sign)
+      std::cout << "+";
+    else
+      std::cout << "-";
+    break;
+  case 12:
+    std::cout << "Nu_Electron";
+    break;
+  case 13:
+    std::cout << "Mu";
+    if(sign)
+      std::cout << "+";
+    else
+      std::cout << "-";
+    break;
+  case 14:
+    std::cout << "Nu_Mu";
+    break;
+  case 15:
+    std::cout << "Tau";
+    if(sign)
+      std::cout << "+";
+    else
+      std::cout << "-";
+    break;
+  case 16:
+    std::cout << "Nu_Tau";
+    break;
+  case 22:
+    std::cout << "Gamma";
+    break;
+  case 111:
+    std::cout << "Pi0";
+    break;
+  case 211:
+    std::cout << "Pi";
+    if(sign)
+      std::cout << "+";
+    else
+      std::cout << "-";
+    break;
+  case 20213:
+    std::cout << "a1";
+    if(sign)
+      std::cout << "+";
+    else
+      std::cout << "-";
+    break;
+  case 1000015:
+    std::cout << "Stau";
+    break;
+  case 1000022:
+    std::cout << "Neutralino";
+    break;
+  default:
+    std::cout << "Unknown";
+  }
+  std::cout << " {pdgId: " << particle->pdgId() << "}";
+  std::cout << " {status: " << particle->status() << "}";
+
+  std::cout << std::endl;
+
+  std::string newPrefix = prefix;
+  if(last)
+    newPrefix += "   ";
+  else
+    newPrefix += "║  ";
+
+  int n = particle->numberOfDaughters();
+  for(int i = 0; i < n; ++i)
+  {
+    if(i == n-1)
+      printParticleAndDaughters((reco::GenParticle*)(particle->daughter(i)), newPrefix, true);
+    else
+      printParticleAndDaughters((reco::GenParticle*)(particle->daughter(i)), newPrefix);
+  }
 }
 
 
