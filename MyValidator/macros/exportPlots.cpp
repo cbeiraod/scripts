@@ -50,6 +50,15 @@ int exportPlots(std::string outdir, std::string rootFile, std::string basename)
   plots["InvMass"]         = "InvMass";
   plots["InvMassCut"]      = "InvMass_Cut";
 
+  plots["hGenElectron1PtFilt"] = "GenElectron1PtFilt";
+  plots["hElectron1PtFilt"]    = "Electron1PtFilt";
+  plots["hGenMuon1PtFilt"]     = "GenMuon1PtFilt";
+  plots["hMuon1PtFilt"]        = "Muon1PtFilt";
+  plots["hGenElectron1PtFilt2"] = "GenElectron1PtFilt2";
+  plots["hElectron1PtFilt2"]    = "Electron1PtFilt2";
+  plots["hGenMuon1PtFilt2"]     = "GenMuon1PtFilt2";
+  plots["hMuon1PtFilt2"]        = "Muon1PtFilt2";
+
   TCanvas c1("c1", "c1", 800, 600);
 
   for(std::map<std::string, std::string>::iterator i = plots.begin(); i != plots.end(); ++i)

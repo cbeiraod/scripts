@@ -121,6 +121,7 @@ class MyValidator : public edm::EDAnalyzer {
       double parameter_JetEtaCut_;
 
       bool parameter_printTree_;
+      bool parameter_FullTree_;
 
 
       TH1F* stauM;
@@ -145,6 +146,15 @@ class MyValidator : public edm::EDAnalyzer {
       TH1F* hNTaus;
       TH1F* hTau1Pt;
 
+      TH1F* hGenElectron1PtFilt;
+      TH1F* hElectron1PtFilt;
+      TH1F* hGenMuon1PtFilt;
+      TH1F* hMuon1PtFilt;
+      TH1F* hGenElectron1PtFilt2;
+      TH1F* hElectron1PtFilt2;
+      TH1F* hGenMuon1PtFilt2;
+      TH1F* hMuon1PtFilt2;
+
       TH1F* hNElectronsCut;
       TH1F* hElectron1PtCut;
       TH1F* hNMuonsCut;
@@ -165,8 +175,13 @@ class MyValidator : public edm::EDAnalyzer {
 
       bool doAllHLT;
 
-      unsigned long long nEvents;
+      unsigned long long nEvents, nEvents2;
       std::map<std::string, unsigned long long> filteredEvents;
+
+      unsigned long long nee, nmumu, nemu, neh, nmuh, nhh;
+      unsigned long long ne, nmu;
+      unsigned long long nee2, nmumu2, nemu2, neh2, nmuh2, nhh2;
+      unsigned long long ne2, nmu2;
 };
 
 //
@@ -216,6 +231,7 @@ MyValidator::MyValidator(const edm::ParameterSet& iConfig)
    parameter_JetEtaCut_ = iConfig.getParameter<double>("jetEtaCut");
 
    parameter_printTree_ = iConfig.getUntrackedParameter<bool>("printTree");
+   parameter_FullTree_  = iConfig.getUntrackedParameter<bool>("FullTree");
 
 
 
@@ -240,6 +256,15 @@ MyValidator::MyValidator(const edm::ParameterSet& iConfig)
 
    hNTaus = rootFile->make<TH1F>("hNTaus", "NTaus;N;Events", 100, 0, 100);
    hTau1Pt = rootFile->make<TH1F>("hTau1Pt", "1st tau pt;P_{t} (GeV);Events", 70, 0, 700);
+
+   hGenElectron1PtFilt = rootFile->make<TH1F>("hGenElectron1PtFilt", "1st Gen electron pt;P_{t} (GeV);Events", 60, 0, 600);
+   hElectron1PtFilt = rootFile->make<TH1F>("hElectron1PtFilt", "1st electron pt;P_{t} (GeV);Events", 60, 0, 600);
+   hGenMuon1PtFilt = rootFile->make<TH1F>("hGenMuon1PtFilt", "1st Gen muon pt;P_{t} (GeV);Events", 60, 0, 600);
+   hMuon1PtFilt = rootFile->make<TH1F>("hMuon1PtFilt", "1st muon pt;P_{t} (GeV);Events", 60, 0, 600);
+   hGenElectron1PtFilt2 = rootFile->make<TH1F>("hGenElectron1PtFilt2", "1st Gen electron pt;P_{t} (GeV);Events", 60, 0, 600);
+   hElectron1PtFilt2 = rootFile->make<TH1F>("hElectron1PtFilt2", "1st electron pt;P_{t} (GeV);Events", 60, 0, 600);
+   hGenMuon1PtFilt2 = rootFile->make<TH1F>("hGenMuon1PtFilt2", "1st Gen muon pt;P_{t} (GeV);Events", 60, 0, 600);
+   hMuon1PtFilt2 = rootFile->make<TH1F>("hMuon1PtFilt2", "1st muon pt;P_{t} (GeV);Events", 60, 0, 600);
 
    hNElectronsCut = rootFile->make<TH1F>("hNElectronsCut", "NElectrons;N;Events", 12, 0, 12);
    hElectron1PtCut = rootFile->make<TH1F>("hElectron1PtCut", "1st electron pt;P_{t} (GeV);Events", 60, 0, 600);
@@ -652,21 +677,127 @@ MyValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   }
   ++nEvents;
 
+  std::vector<const reco::GenParticle*> allGenParticles;
+  std::vector<const reco::GenParticle*> staus;
+  std::vector<const reco::GenParticle*> leptons;
+  for(genparticle = genparticles->begin(); genparticle != genparticles->end(); ++genparticle)
+  {
+    allGenParticles.push_back(& * genparticle);
+    if(abs(genparticle->pdgId()) == 1000015 && genparticle->status() == 3) //Find staus from Matrix Element, save them to start tree creation
+      staus.push_back(& * genparticle);
+    if((abs(genparticle->pdgId()) == 11 || abs(genparticle->pdgId()) == 13) && genparticle->status() == 1)
+      leptons.push_back(& * genparticle);
+  }
+
+  unsigned long nLeptons = 0;
+  bool el = false, mu = false;
+  bool veto = false;
+  for(auto lepton = leptons.begin(); lepton != leptons.end(); ++lepton)
+  {
+    reco::GenParticle* isStau = (reco::GenParticle*)(((*lepton)->mother())->mother());
+    if(abs(isStau->pdgId()) == 15 && isStau->status() == 3)
+    {
+      ++nLeptons;
+      if(abs((*lepton)->pdgId()) == 11)
+        el = true;
+      else
+        mu = true;
+      if(((*lepton)->p4()).E() == 0)
+        veto = true;
+    }
+  }
+
+  if(nGenElectrons != 0 && el)
+    hGenElectron1PtFilt->Fill(maxGenElectronPt);
+  if(nElectrons != 0 && el)
+    hElectron1PtFilt->Fill(maxElectronPt);
+  if(nGenMuons != 0 && mu)
+    hGenMuon1PtFilt->Fill(maxGenMuonPt);
+  if(nMuons != 0 && mu)
+    hMuon1PtFilt->Fill(maxMuonPt);
+  if(nGenElectrons != 0 && el && !veto)
+    hGenElectron1PtFilt2->Fill(maxGenElectronPt);
+  if(nElectrons != 0 && el && !veto)
+    hElectron1PtFilt2->Fill(maxElectronPt);
+  if(nGenMuons != 0 && mu && !veto)
+    hGenMuon1PtFilt2->Fill(maxGenMuonPt);
+  if(nMuons != 0 && mu && !veto)
+    hMuon1PtFilt2->Fill(maxMuonPt);
+  if(!veto)
+    ++nEvents2;
+
+  assert(nLeptons <= 2);
+  switch(nLeptons)
+  {
+  case 0:
+    ++nhh;
+    if(!veto)
+      ++nhh2;
+    break;
+  case 1:
+    if(el)
+    {
+      ++neh;
+      ++ne;
+      if(!veto)
+      {
+        ++neh2;
+        ++ne2;
+      }
+    }
+    else
+    {
+      ++nmuh;
+      ++nmu;
+      if(!veto)
+      {
+        ++nmuh2;
+        ++nmu2;
+      }
+    }
+    break;
+  case 2:
+    if(el && mu)
+    {
+      ++nemu;
+      ++ne;
+      ++nmu;
+      if(!veto)
+      {
+        ++nemu2;
+        ++ne2;
+        ++nmu2;
+      }
+    }
+    else
+    {
+      if(el)
+      {
+        ++nee;
+        ++ne;
+        if(!veto)
+        {
+          ++nee2;
+          ++ne2;
+        }
+      }
+      else
+      {
+        ++nmumu;
+        ++nmu;
+        if(!veto)
+        {
+          ++nmumu2;
+          ++nmu2;
+        }
+      }
+    }
+    break;
+  }
+
   if(parameter_printTree_)
   {
     std::cout << "Event " << iEvent.id() << std::endl;
-
-    std::vector<const reco::GenParticle*> staus;
-    std::vector<const reco::GenParticle*> other;
-    for(genparticle = genparticles->begin(); genparticle != genparticles->end(); ++genparticle)
-    {
-      if(abs(genparticle->pdgId()) == 1000015 && genparticle->status() == 3) //Find staus from Matrix Element, save them to start tree creation
-      {
-        staus.push_back(& * genparticle);
-      }
-      else
-        other.push_back(& * genparticle);
-    }
 
     for(size_t i = 0; i < staus.size(); ++i)
     {
@@ -679,6 +810,7 @@ MyValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     std::cout << std::endl;
   }
 //  assert(1<0);
+//  assert(!veto);
 }
 
 void MyValidator::printParticleAndDaughters(const reco::GenParticle* particle, std::string prefix, bool last)
@@ -689,9 +821,39 @@ void MyValidator::printParticleAndDaughters(const reco::GenParticle* particle, s
   else
     std::cout << "╠ ";
 
-  bool sign = (particle->pdgId()>0);
+  bool sign = (particle->pdgId() > 0);
   switch(abs(particle->pdgId()))
   {
+  case 1:
+    if(!sign)
+      std::cout << "~";
+    std::cout << "d";
+    break;
+  case 2:
+    if(!sign)
+      std::cout << "~";
+    std::cout << "u";
+    break;
+  case 3:
+    if(!sign)
+      std::cout << "~";
+    std::cout << "s";
+    break;
+  case 4:
+    if(!sign)
+      std::cout << "~";
+    std::cout << "c";
+    break;
+  case 5:
+    if(!sign)
+      std::cout << "~";
+    std::cout << "b";
+    break;
+  case 6:
+    if(!sign)
+      std::cout << "~";
+    std::cout << "t";
+    break;
   case 11:
     std::cout << "Electron";
     if(sign)
@@ -722,14 +884,53 @@ void MyValidator::printParticleAndDaughters(const reco::GenParticle* particle, s
   case 16:
     std::cout << "Nu_Tau";
     break;
+  case 21:
+    std::cout << "g";
+    break;
   case 22:
     std::cout << "Gamma";
+    break;
+  case 23:
+    std::cout << "Z0";
+    break;
+  case 24:
+    std::cout << "W";
+    if(sign)
+      std::cout << "+";
+    else
+      std::cout << "-";
+    break;
+  case 25:
+    std::cout << "H0";
     break;
   case 111:
     std::cout << "Pi0";
     break;
+  case 113:
+    std::cout << "rho0";
+    break;
+  case 130:
+    std::cout << "KL0";
+    break;
   case 211:
     std::cout << "Pi";
+    if(sign)
+      std::cout << "+";
+    else
+      std::cout << "-";
+    break;
+  case 213:
+    std::cout << "rho";
+    if(sign)
+      std::cout << "+";
+    else
+      std::cout << "-";
+    break;
+  case 310:
+    std::cout << "KS0";
+    break;
+  case 321:
+    std::cout << "K";
     if(sign)
       std::cout << "+";
     else
@@ -744,6 +945,10 @@ void MyValidator::printParticleAndDaughters(const reco::GenParticle* particle, s
     break;
   case 1000015:
     std::cout << "Stau";
+    if(sign)
+      std::cout << "+";
+    else
+      std::cout << "-";
     break;
   case 1000022:
     std::cout << "Neutralino";
@@ -753,6 +958,12 @@ void MyValidator::printParticleAndDaughters(const reco::GenParticle* particle, s
   }
   std::cout << " {pdgId: " << particle->pdgId() << "}";
   std::cout << " {status: " << particle->status() << "}";
+
+  if(parameter_FullTree_)
+  {
+    std::cout << " {E: " << particle->p4().E() << "}";
+    std::cout << " {P: (" << particle->p4().Px() << ", " << particle->p4().Py() << ", " << particle->p4().Pz() << ")}";
+  }
 
   std::cout << std::endl;
 
@@ -778,17 +989,45 @@ void
 MyValidator::beginJob()
 {
   nEvents = 0;
+  nEvents2 = 0;
+
+  nee = 0;
+  nmumu = 0;
+  nemu = 0;
+  neh = 0;
+  nmuh = 0;
+  nhh = 0;
+  ne = 0;
+  nmu = 0;
+
+  nee2 = 0;
+  nmumu2 = 0;
+  nemu2 = 0;
+  neh2 = 0;
+  nmuh2 = 0;
+  nhh2 = 0;
+  ne2 = 0;
+  nmu2 = 0;
 }
 
 // ------------ method called once each job just after ending the event loop  ------------
 void 
 MyValidator::endJob() 
 {
-  std::cout << "Total events: " << nEvents << std::endl;
+  std::cout << "Total events: " << nEvents << " (" << nEvents2 << ")" << std::endl;
+  std::cout << "Events with electrons: " << ne << " (" << ne2 << ")" << std::endl;
+  std::cout << "Events with muons: " << nmu << " (" << nmu2 << ")" << std::endl;
+  std::cout << " Di-electron events: " << nee << " (" << nee2 << ")" << std::endl;
+  std::cout << " Di-muon events: " << nmumu << " (" << nmumu2 << ")" << std::endl;
+  std::cout << " Electron-Muon events: " << nemu << " (" << nemu2 << ")" << std::endl;
+  std::cout << " Full hadronic events: " << nhh << " (" << nhh2 << ")" << std::endl;
+  std::cout << " Semi-leptonic events (electron): " << neh << " (" << neh2 << ")" << std::endl;
+  std::cout << " Semi-leptonic events (muon): " << nmuh << " (" << nmuh2 << ")" << std::endl;
 
+  std::cout << "HLT:" << std::endl;
   for(auto i = filteredEvents.begin(); i != filteredEvents.end(); ++i)
   {
-    std::cout << "  " << i->first << ": " << i->second << " => " << ((double)(i->second) * 100.)/nEvents << "%" << std::endl;
+    std::cout << "  " << i->first << ": " << i->second << " => " << ((double)(i->second) * 100.)/nEvents << "% (" << ((double)(i->second) * 100.)/nEvents2 << ")" << std::endl;
   }
 }
 
@@ -847,7 +1086,8 @@ MyValidator::endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup con
 
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
 void
-MyValidator::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+MyValidator::fillDescriptions(edm::ConfigurationDescriptions& descriptions)
+{
   //The following says we do not know what parameters are allowed so do no validation
   // Please change this to state exactly what you do use, even if it is no parameters
   edm::ParameterSetDescription desc;

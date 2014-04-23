@@ -20,6 +20,7 @@ validator = cms.EDAnalyzer('MyValidator',
   trigger = cms.InputTag("hltTriggerSummaryAOD"),
 
   printTree = cms.untracked.bool(True),
+  FullTree  = cms.untracked.bool(True),
 
   processName = cms.string("HLT"),
   triggerName = cms.string("@"),

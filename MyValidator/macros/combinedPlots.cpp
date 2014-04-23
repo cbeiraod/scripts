@@ -31,6 +31,30 @@ int combinedPlots(std::string outdir, std::string rootDir)
     deltaMs["8E33_deltaM10"] = tempVec;
 
     tempVec.clear();
+    tempVec.push_back(rootDir+"/TStauStau_50_0_5E33_Validation.root");
+    tempVec.push_back(rootDir+"/TStauStau_300_250_5E33_Validation.root");
+    tempVec.push_back(rootDir+"/TStauStau_500_450_5E33_Validation.root");
+    deltaMs["5E33_deltaM50"] = tempVec;
+
+    tempVec.clear();
+    tempVec.push_back(rootDir+"/TStauStau_50_0_8E33_Validation.root");
+    tempVec.push_back(rootDir+"/TStauStau_300_250_8E33_Validation.root");
+    tempVec.push_back(rootDir+"/TStauStau_500_450_8E33_Validation.root");
+    deltaMs["8E33_deltaM50"] = tempVec;
+
+    tempVec.clear();
+    tempVec.push_back(rootDir+"/TStauStau_100_0_5E33_Validation.root");
+    tempVec.push_back(rootDir+"/TStauStau_300_200_5E33_Validation.root");
+    tempVec.push_back(rootDir+"/TStauStau_500_400_5E33_Validation.root");
+    deltaMs["5E33_deltaM100"] = tempVec;
+
+    tempVec.clear();
+    tempVec.push_back(rootDir+"/TStauStau_100_0_8E33_Validation.root");
+    tempVec.push_back(rootDir+"/TStauStau_300_200_8E33_Validation.root");
+    tempVec.push_back(rootDir+"/TStauStau_500_400_8E33_Validation.root");
+    deltaMs["8E33_deltaM100"] = tempVec;
+
+    tempVec.clear();
     tempVec.push_back(rootDir+"/TStauStau_150_0_5E33_Validation.root");
     tempVec.push_back(rootDir+"/TStauStau_300_150_5E33_Validation.root");
     tempVec.push_back(rootDir+"/TStauStau_500_350_5E33_Validation.root");
@@ -81,6 +105,15 @@ int combinedPlots(std::string outdir, std::string rootDir)
     plots["hTau1PtCut"]      = "Tau1Pt_Cut";
     plots["InvMass"]         = "InvMass";
     plots["InvMassCut"]      = "InvMass_Cut";
+
+    plots["hGenElectron1PtFilt"]  = "GenElectron1PtFilt";
+    plots["hElectron1PtFilt"]     = "Electron1PtFilt";
+    plots["hGenMuon1PtFilt"]      = "GenMuon1PtFilt";
+    plots["hMuon1PtFilt"]         = "Muon1PtFilt";
+    plots["hGenElectron1PtFilt2"] = "GenElectron1PtFilt2";
+    plots["hElectron1PtFilt2"]    = "Electron1PtFilt2";
+    plots["hGenMuon1PtFilt2"]     = "GenMuon1PtFilt2";
+    plots["hMuon1PtFilt2"]        = "Muon1PtFilt2";
   }
 
   gStyle->SetOptStat(0);
