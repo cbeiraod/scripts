@@ -76,6 +76,66 @@ int combinedPlots(std::string outdir, std::string rootDir)
     tempVec.push_back(rootDir+"/TStauStau_500_200_8E33_Validation.root");
     deltaMs["8E33_deltaM300"] = tempVec;
 
+    tempVec.clear();
+    tempVec.push_back(rootDir+"/TStauStau_300_0_5E33_Validation.root");
+    tempVec.push_back(rootDir+"/TStauStau_300_150_5E33_Validation.root");
+    tempVec.push_back(rootDir+"/TStauStau_300_200_5E33_Validation.root");
+    tempVec.push_back(rootDir+"/TStauStau_300_250_5E33_Validation.root");
+    tempVec.push_back(rootDir+"/TStauStau_300_290_5E33_Validation.root");
+    deltaMs["5E33_Stau300"] = tempVec;
+
+    tempVec.clear();
+    tempVec.push_back(rootDir+"/TStauStau_300_0_8E33_Validation.root");
+    tempVec.push_back(rootDir+"/TStauStau_300_150_8E33_Validation.root");
+    tempVec.push_back(rootDir+"/TStauStau_300_200_8E33_Validation.root");
+    tempVec.push_back(rootDir+"/TStauStau_300_250_8E33_Validation.root");
+    tempVec.push_back(rootDir+"/TStauStau_300_290_8E33_Validation.root");
+    deltaMs["8E33_Stau300"] = tempVec;
+
+    tempVec.clear();
+    tempVec.push_back(rootDir+"/TStauStau_500_0_5E33_Validation.root");
+    tempVec.push_back(rootDir+"/TStauStau_500_200_5E33_Validation.root");
+    tempVec.push_back(rootDir+"/TStauStau_500_350_5E33_Validation.root");
+    tempVec.push_back(rootDir+"/TStauStau_500_400_5E33_Validation.root");
+    tempVec.push_back(rootDir+"/TStauStau_500_450_5E33_Validation.root");
+    tempVec.push_back(rootDir+"/TStauStau_500_480_5E33_Validation.root");
+    deltaMs["5E33_Stau500"] = tempVec;
+
+    tempVec.clear();
+    tempVec.push_back(rootDir+"/TStauStau_500_0_8E33_Validation.root");
+    tempVec.push_back(rootDir+"/TStauStau_500_200_8E33_Validation.root");
+    tempVec.push_back(rootDir+"/TStauStau_500_350_8E33_Validation.root");
+    tempVec.push_back(rootDir+"/TStauStau_500_400_8E33_Validation.root");
+    tempVec.push_back(rootDir+"/TStauStau_500_450_8E33_Validation.root");
+    tempVec.push_back(rootDir+"/TStauStau_500_480_8E33_Validation.root");
+    deltaMs["8E33_Stau500"] = tempVec;
+
+    tempVec.clear();
+    tempVec.push_back(rootDir+"/TStauStau_50_0_5E33_Validation.root");
+    tempVec.push_back(rootDir+"/TStauStau_100_0_5E33_Validation.root");
+    tempVec.push_back(rootDir+"/TStauStau_150_0_5E33_Validation.root");
+    tempVec.push_back(rootDir+"/TStauStau_300_0_5E33_Validation.root");
+    tempVec.push_back(rootDir+"/TStauStau_500_0_5E33_Validation.root");
+    deltaMs["5E33_Neutralino0"] = tempVec;
+
+    tempVec.clear();
+    tempVec.push_back(rootDir+"/TStauStau_50_0_8E33_Validation.root");
+    tempVec.push_back(rootDir+"/TStauStau_100_0_8E33_Validation.root");
+    tempVec.push_back(rootDir+"/TStauStau_150_0_8E33_Validation.root");
+    tempVec.push_back(rootDir+"/TStauStau_300_0_8E33_Validation.root");
+    tempVec.push_back(rootDir+"/TStauStau_500_0_8E33_Validation.root");
+    deltaMs["8E33_Neutralino0"] = tempVec;
+
+    tempVec.clear();
+    tempVec.push_back(rootDir+"/TStauStau_300_200_5E33_Validation.root");
+    tempVec.push_back(rootDir+"/TStauStau_500_200_5E33_Validation.root");
+    deltaMs["5E33_Neutralino200"] = tempVec;
+
+    tempVec.clear();
+    tempVec.push_back(rootDir+"/TStauStau_300_200_8E33_Validation.root");
+    tempVec.push_back(rootDir+"/TStauStau_500_200_8E33_Validation.root");
+    deltaMs["8E33_Neutralino200"] = tempVec;
+
     plots["hGenMET"]         = "GenMET";
     plots["hGenNElectrons"]  = "GenNElectrons";
     plots["hGenElectron1Pt"] = "GenElectron1Pt";
@@ -176,6 +236,15 @@ int combinedPlots(std::string outdir, std::string rootDir)
           break;
         case 2:
           hist->SetLineColor(kGreen);
+          break;
+        case 3:
+          hist->SetLineColor(kMagenta);
+          break;
+        case 4:
+          hist->SetLineColor(kYellow);
+          break;
+        case 5:
+          hist->SetLineColor(kCyan);
           break;
         }
 
