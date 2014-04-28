@@ -16,4 +16,10 @@
 <use name ="DataFormats/Math"/>
 <use name ="CommonTools/UtilAlgos"/>
 
+#For TriggerResults
+<use name ="HLTrigger/HLTcore"/>
+
 <flags EDM_PLUGIN="1"/>
+#<export>
+#  <lib name="MyValidator"/>
+#</export>
