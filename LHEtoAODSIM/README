@@ -1,0 +1,40 @@
+How to take a LHE file and run CMS simulation on it to have analysis ready files:
+(many of the scripts are written to run on the LIP computing resources: T2_PT_NCG_Lisbon/NCG cluster/etc...)
+
+myGenFragment_cfi.py is a config file for CMSSW, to be used in conjunction with CMSDriver to create CMSSW python files to be run by cmsRun or CRAB.
+     Uses tauola to decay the taus
+
+The Configuration/Generator package should be checked out, and myGenFragment_cfi.py should be copied to Configuration/Generator/python
+Example command to run with crab:
+cmsDriver.py myGenFragment_cfi.py --mc --eventcontent AODSIM --pileup 2012_Summer_inTimeOnly --datatier AODSIM --conditions START53_V19::All --beamspot Realistic8TeVCollision --step GEN,FASTSIM,HLT:7E33v2 --filein=file:/lustre/ncg.ingrid.pt/cmslocal/cbeiraod/TStauStau/TStauStau_50_0.lhe --fileout TStauStau_50_0_GEN_FASTSIM_HLT_PU.root --python_filename TStauStau_50_0_GEN_FASTSIM_HLT_PU.py -n 10 --no_exec
+
+The configuration should be tested with:
+cmsRun TStauStau_50_0_GEN_FASTSIM_HLT_PU.py
+
+
+crab_TStauStau_50_0.cfg is an example CRAB config file to run the previous CMSSW config file, it will create two jobs, each processing 10 events.
+Run with the following CRAB commands:
+(Don't forget to source CRAB: source /exper-sw/cmst3/cmssw/crab/crab.sh)
+crab -create -cfg crab_TStauStau_50_0.cfg
+crab -submit -c TStauStau_50_0
+crab -status -c TStauStau_50_0
+crab -getoutput -c TStauStau_50_0
+#crab -report -c TStauStau_50_0
+(resubmit as needed to ensure job completion, don't forget to get output before resubmission)
+
+
+If everything runs fine so far, the following scripts should run without any problems. These scripts scan the LHE directory and create CMSSW "cfi" and CRAB "cfg" for 
+each LHE sample, these can then be run either locally (CMSSW "cfi") or submitted to the GRID (CRAB "cfg").
+Run the script createCRABcfg.sh to process a folder, where the LHE files must be present, creating a CMSSW config file and a CRAB cfg file, to submit 
+jobs to the GRID. The script does not create a log file, but outputs everything to stdout. To create a log file you can do the following:
+./createCRABcfg.sh ~/local-area/TStauStau/ > log.log
+or, if you wish to monitor the output while running:
+./createCRABcfg.sh ~/local-area/TStauStau/ | tee log.log
+
+Now, there should be 2 new folders, one named 5E33 and the other named 8E33, these use the two different HLT configurations (7E33 is a subset of 8E33 
+for the HLT paths I am interested in). Inside each, for each LHE file, there should be a py file and a cfg file. The py file can be run directly with 
+cmssw (with the command "cmsRun file") however if the number of events is large, this is not recommended. In alternative, one can run the cfg files with 
+crab, this will create several jobs per file, each job processing up to 2000 jobs. These jobs can then be submitted to the GRID, just like with the 
+previous set of commands. The number of jobs might have to be tuned.
+
+The script runCreate.sh is a wrapper script to submit createCRABcfg.sh with qsub
